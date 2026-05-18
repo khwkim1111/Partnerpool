@@ -136,6 +136,7 @@
 <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 const params = new URLSearchParams(location.search);
 const dest = params.get('dest');
@@ -156,6 +157,7 @@ try {
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   window.fbAuth = firebase.auth();
   window.GoogleAuthProvider = firebase.auth.GoogleAuthProvider;
+  window.fsdb = firebase.firestore();
 } catch(e) {
   console.warn('Firebase 연결 실패', e);
 }
@@ -166,6 +168,32 @@ try {
   }
 } catch(e) {
   console.warn('Kakao SDK 초기화 실패', e);
+}
+
+async function checkUserExists(email, kakaoId) {
+  if (!window.fsdb) return true; // Firebase 없으면 통과
+  try {
+    const timeout = new Promise(resolve => setTimeout(() => resolve(null), 5000));
+    let snap = null;
+    if (email) {
+      snap = await Promise.race([
+        window.fsdb.collection('users').where('email', '==', email).limit(1).get(),
+        timeout
+      ]);
+      if (snap && !snap.empty) return true;
+    }
+    if (kakaoId) {
+      snap = await Promise.race([
+        window.fsdb.collection('users').where('kakaoId', '==', kakaoId).limit(1).get(),
+        timeout
+      ]);
+      if (snap && !snap.empty) return true;
+    }
+    return false;
+  } catch(e) {
+    console.warn('사용자 확인 실패, 통과 처리:', e);
+    return true; // 오류 시 통과
+  }
 }
 
 function getDestUrl() {
@@ -229,16 +257,23 @@ function loginWithKakao() {
     success: function() {
       Kakao.API.request({
         url: '/v2/user/me',
-        success: function(res) {
+        success: async function(res) {
           const kakaoAccount = res.kakao_account || {};
           const profile = kakaoAccount.profile || {};
+          const kakaoEmail = kakaoAccount.email || '';
+          const kakaoId = String(res.id || '');
 
           sessionStorage.setItem('pp_kakao_login', 'true');
-          sessionStorage.setItem('pp_kakao_id', String(res.id || ''));
-          sessionStorage.setItem('pp_kakao_email', kakaoAccount.email || '');
+          sessionStorage.setItem('pp_kakao_id', kakaoId);
+          sessionStorage.setItem('pp_kakao_email', kakaoEmail);
           sessionStorage.setItem('pp_kakao_name', profile.nickname || '');
 
-          goDestination();
+          const exists = await checkUserExists(kakaoEmail, kakaoId);
+          if (!exists) {
+            goSignup();
+          } else {
+            goDestination();
+          }
         },
         fail: function(error) {
           setButtonLoading('kakaoBtn', false);
@@ -260,7 +295,13 @@ function loginWithGoogle() {
   if (window.fbAuth && window.GoogleAuthProvider) {
     const provider = new window.GoogleAuthProvider();
     window.fbAuth.signInWithPopup(provider)
-      .then(() => goDestination())
+      .then(async result => {
+        if (result.additionalUserInfo && result.additionalUserInfo.isNewUser) {
+          goSignup();
+        } else {
+          goDestination();
+        }
+      })
       .catch(e => showErr('Google 로그인 실패: ' + e.message));
   } else {
     goDestination();
@@ -286,12 +327,14 @@ function loginWithEmail() {
       .then(() => goDestination())
       .catch(e => {
         setButtonLoading('loginBtn', false);
+        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+          goSignup();
+          return;
+        }
         const msgs = {
-          'auth/user-not-found':'등록되지 않은 이메일입니다.',
           'auth/wrong-password':'비밀번호가 올바르지 않습니다.',
           'auth/invalid-email':'올바른 이메일 형식이 아닙니다.',
-          'auth/too-many-requests':'너무 많은 시도입니다. 잠시 후 다시 시도해주세요.',
-          'auth/invalid-credential':'이메일 또는 비밀번호를 확인해주세요.'
+          'auth/too-many-requests':'너무 많은 시도입니다. 잠시 후 다시 시도해주세요.'
         };
         showErr(msgs[e.code] || '로그인 중 오류: ' + e.message);
       });

@@ -371,7 +371,9 @@
           return Promise.all([
             cred.user.updateProfile({ displayName: name }),
             window.fsdb ? window.fsdb.collection('users').doc(cred.user.uid).set({
-              name, org, role: selectedRole, email, createdAt: new Date().toISOString()
+              name, org, role: selectedRole, email,
+              kakaoId: sessionStorage.getItem('pp_kakao_id') || '',
+              createdAt: new Date().toISOString()
             }) : Promise.resolve()
           ]);
         })

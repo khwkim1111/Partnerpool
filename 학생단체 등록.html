@@ -547,6 +547,9 @@ async function submitForm() {
     }
   }
 
+  sessionStorage.setItem('pp_registered_name', newClub.name);
+  sessionStorage.setItem('pp_registered_type', 'club');
+
   document.getElementById('formArea').style.display = 'none';
   document.getElementById('successArea').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });

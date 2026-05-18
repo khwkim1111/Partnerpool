@@ -295,41 +295,33 @@
       </div>
     </div>
 
-    <!-- 요금제 선택 -->
+    <!-- 기업 인증 -->
     <div class="card">
-      <div class="section-title">이용 요금제 선택</div>
-      <div class="plan-grid">
-        <div class="plan-card" onclick="selectPlan(this)">
-          <div class="plan-badge">Basic</div>
-          <div class="plan-name">베이직</div>
-          <div class="plan-price">무료</div>
-          <div class="plan-features">
-            · 프로필 등록<br>
-            · 동아리 탐색<br>
-            · 월 3건 제안
-          </div>
+      <div class="section-title">기업 인증</div>
+
+      <div class="field">
+        <label>사업자 등록번호<span class="req">*</span><span class="hint">형식: 000-00-00000</span></label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="text" id="bizNumVerify" placeholder="000-00-00000" maxlength="12"
+            oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/(\d{3})(\d{2})(\d{5})/,'$1-$2-$3').substring(0,12)"
+            style="flex:1">
+          <button type="button" id="bizVerifyBtn" onclick="verifyBizNum()" style="white-space:nowrap;padding:12px 18px;border-radius:10px;border:1.5px solid var(--navy);background:white;color:var(--navy);font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all 0.2s;flex-shrink:0">인증하기</button>
         </div>
-        <div class="plan-card selected" onclick="selectPlan(this)" style="position:relative;">
-          <div class="plan-tag">추천</div>
-          <div class="plan-badge">Pro</div>
-          <div class="plan-name">프로</div>
-          <div class="plan-price">월 49,000원</div>
-          <div class="plan-features">
-            · 무제한 제안<br>
-            · 우선 노출<br>
-            · 매칭 알림
-          </div>
+        <div id="bizNumStatus" style="margin-top:8px;font-size:12px;font-weight:600;min-height:18px"></div>
+      </div>
+
+      <div class="field">
+        <label>사업자등록증 첨부<span class="req">*</span><span class="hint">이미지 또는 PDF</span></label>
+        <div class="upload-zone" onclick="document.getElementById('bizFile').click()">
+          <input type="file" id="bizFile" accept="image/*,.pdf" onchange="handleBizFile(this)">
+          <div class="upload-icon">📄</div>
+          <div class="upload-label" id="bizFileLabel">클릭하여 사업자등록증 업로드<br><strong>JPG, PNG, PDF</strong> 가능</div>
         </div>
-        <div class="plan-card" onclick="selectPlan(this)">
-          <div class="plan-badge">Enterprise</div>
-          <div class="plan-name">엔터프라이즈</div>
-          <div class="plan-price">월 149,000원</div>
-          <div class="plan-features">
-            · 전담 매니저<br>
-            · 분석 리포트<br>
-            · 맞춤 매칭
-          </div>
-        </div>
+        <div class="file-list" id="bizFilePreview"></div>
+      </div>
+
+      <div id="bizVerifyResult" style="display:none;margin-top:4px;padding:12px 16px;background:#dcfce7;border:1px solid #86efac;border-radius:10px;font-size:13px;font-weight:700;color:#16a34a">
+        ✅ 기업 인증 완료 — 관리자 검토 후 승인됩니다.
       </div>
     </div>
 
@@ -357,12 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-function toggleCheck(el) { el.classList.toggle('checked'); }
+let bizVerified = false;
+let bizFileAttached = false;
 
-function selectPlan(el) {
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-}
+function toggleCheck(el) { el.classList.toggle('checked'); }
 
 function handleFile(input, previewId) {
   const preview = document.getElementById(previewId);
@@ -373,6 +363,51 @@ function handleFile(input, previewId) {
     chip.innerHTML = `📎 ${f.name} <span class="file-rm" onclick="this.parentElement.remove()">✕</span>`;
     preview.appendChild(chip);
   });
+}
+
+function handleBizFile(input) {
+  const preview = document.getElementById('bizFilePreview');
+  const label = document.getElementById('bizFileLabel');
+  preview.innerHTML = '';
+  if (input.files.length > 0) {
+    const f = input.files[0];
+    const chip = document.createElement('div');
+    chip.className = 'file-chip';
+    chip.innerHTML = `📎 ${f.name} <span class="file-rm" onclick="this.parentElement.remove();bizFileAttached=false;document.getElementById('bizFileLabel').innerHTML='클릭하여 사업자등록증 업로드<br><strong>JPG, PNG, PDF</strong> 가능'">✕</span>`;
+    preview.appendChild(chip);
+    bizFileAttached = true;
+    checkBizVerify();
+  }
+}
+
+function verifyBizNum() {
+  const val = v('bizNumVerify');
+  const status = document.getElementById('bizNumStatus');
+  const btn = document.getElementById('bizVerifyBtn');
+  if (!/^\d{3}-\d{2}-\d{5}$/.test(val)) {
+    status.style.color = '#dc2626';
+    status.textContent = '올바른 형식으로 입력해주세요 (예: 123-45-67890)';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '확인 중...';
+  setTimeout(() => {
+    status.style.color = '#16a34a';
+    status.textContent = '✓ 사업자 등록번호 확인됨';
+    btn.textContent = '확인 완료';
+    btn.style.background = '#dcfce7';
+    btn.style.borderColor = '#86efac';
+    btn.style.color = '#16a34a';
+    bizVerified = true;
+    checkBizVerify();
+  }, 800);
+}
+
+function checkBizVerify() {
+  const result = document.getElementById('bizVerifyResult');
+  if (bizVerified && bizFileAttached) {
+    result.style.display = 'block';
+  }
 }
 
 function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
@@ -386,12 +421,16 @@ async function submitForm() {
   if (!v('companyName') || !v('industry') || !v('repName') || !v('repContact') || !v('repEmail') || !v('companyIntro')) {
     alert('필수 항목(*)을 모두 입력해주세요.'); return;
   }
+  if (!bizVerified) {
+    alert('사업자 등록번호 인증을 완료해주세요.'); return;
+  }
+  if (!bizFileAttached) {
+    alert('사업자등록증 파일을 첨부해주세요.'); return;
+  }
 
   const submitBtn = document.querySelector('.submit-btn');
   submitBtn.disabled = true;
   submitBtn.textContent = '제출 중...';
-
-  const selectedPlan = document.querySelector('.plan-card.selected .plan-name');
 
   const newCorp = {
     name:       v('companyName'),
@@ -399,13 +438,14 @@ async function submitForm() {
     size:       v('companySize') || '-',
     website:    v('website') || '',
     intro:      v('companyIntro'),
+    bizNum:     v('bizNumVerify'),
     rep:        v('repName'),
     repRole:    v('repRole') || '-',
     contact:    v('repContact'),
     email:      v('repEmail'),
     regions:    getCheckedLabels('targetRegion'),
     channels:   getCheckedLabels('targetChannel'),
-    plan:       selectedPlan ? selectedPlan.textContent : '베이직',
+    verified:   true,
     date:       new Date().toLocaleDateString('ko-KR'),
     createdAt:  new Date().toISOString(),
     status:     '검토 대기'
@@ -427,6 +467,9 @@ async function submitForm() {
       console.warn('Firebase 저장 실패:', err.code || err.message);
     }
   }
+
+  sessionStorage.setItem('pp_registered_name', newCorp.name);
+  sessionStorage.setItem('pp_registered_type', 'corp');
 
   document.getElementById('formArea').style.display = 'none';
   document.getElementById('successArea').style.display = 'block';

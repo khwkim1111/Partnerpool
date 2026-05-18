@@ -686,27 +686,28 @@ showSkeletons('stuGrid', 6);
       : kakaoUser;
 
     if (user) {
-      loginBtn.textContent = user.displayName + ' ▾';
+      const registeredName = sessionStorage.getItem('pp_registered_name');
+      loginBtn.textContent = (registeredName || user.displayName) + ' ▾';
       loginBtn.onclick = () => {
         if (!confirm('로그아웃 하시겠습니까?')) return;
         sessionStorage.removeItem('pp_kakao_login');
         sessionStorage.removeItem('pp_kakao_id');
         sessionStorage.removeItem('pp_kakao_email');
         sessionStorage.removeItem('pp_kakao_name');
+        sessionStorage.removeItem('pp_registered_name');
+        sessionStorage.removeItem('pp_registered_type');
         if (_auth && _auth.currentUser) {
           _auth.signOut().finally(() => location.reload());
         } else {
           location.reload();
         }
       };
-      if (joinBtn) {
-        joinBtn.textContent = '등록하기';
-        joinBtn.onclick = () => go('club');
-      }
+      if (joinBtn) joinBtn.style.display = 'none';
     } else {
       loginBtn.textContent = '로그인';
       loginBtn.onclick = () => location.href = 'login-kakao.html';
       if (joinBtn) {
+        joinBtn.style.display = '';
         joinBtn.textContent = '무료 가입';
         joinBtn.onclick = () => go('club');
       }
