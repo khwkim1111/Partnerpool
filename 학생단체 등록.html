@@ -385,6 +385,14 @@
 </div>
 
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+  const kakaoName = sessionStorage.getItem('pp_kakao_name');
+  if (kakaoName) {
+    const el = document.getElementById('repName');
+    if (el && !el.value) el.value = kakaoName;
+  }
+});
+
 function toggleCheck(el) { el.classList.toggle('checked'); }
 
 function handleFile(input, previewId) {
