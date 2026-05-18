@@ -523,7 +523,7 @@ async function submitForm() {
     ytSubs:      verifiedChannels['youtube']?.count || '0',
     date: new Date().toLocaleDateString('ko-KR'),
     createdAt: new Date().toISOString(),
-    status: '공개'
+    status: '검토 대기'
   };
 
   // localStorage에 항상 백업 저장

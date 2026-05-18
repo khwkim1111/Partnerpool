@@ -547,23 +547,8 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
 </style>
 
 <script>
-/* ── 샘플 데이터 (Firebase 미연결 시 표시) ── */
-const SAMPLE_BIZ = [
-  { id:'b1', name:'카페베네', industry:'식음료', size:'중소기업 (10~300인)', intro:'전국 대학가 매장을 보유한 카페 브랜드입니다. 학생 행사·MT·축제에 음료 협찬을 적극 지원합니다.', regions:['서울','경기 / 인천'], contact:'010-1234-5678', status:'공개' },
-  { id:'b2', name:'토스뱅크', industry:'금융 / 핀테크', size:'대기업 (1000인 이상)', intro:'대학생 타깃 체크카드·금융 서비스를 운영 중입니다. 신입생 OT·학생회 행사와의 제휴를 환영합니다.', regions:['지역 무관'], contact:'02-1234-5678', status:'공개' },
-  { id:'b3', name:'닥터마틴 코리아', industry:'패션 / 의류', size:'중견기업 (300~1000인)', intro:'글로벌 신발 브랜드의 한국 공식 유통사입니다. 캠퍼스 서포터즈 및 동아리 협찬 파트너를 모집합니다.', regions:['서울'], contact:'02-9876-5432', status:'공개' },
-  { id:'b4', name:'해커스어학원', industry:'교육 / 스터디', size:'중소기업 (10~300인)', intro:'토익·토플·오픽 전문 어학원입니다. 학생회를 통한 수강권 배포 및 홍보 협찬을 진행합니다.', regions:['서울','경기 / 인천','부산 / 경남'], contact:'02-5678-1234', status:'공개' },
-  { id:'b5', name:'배달의민족', industry:'IT / 앱서비스', size:'대기업 (1000인 이상)', intro:'국내 1위 배달 앱 서비스입니다. 동아리·학생회 회식 할인 쿠폰 제휴 프로그램을 운영합니다.', regions:['지역 무관'], contact:'1600-0000', status:'공개' },
-  { id:'b6', name:'어퍼풋', industry:'스포츠 / 헬스', size:'스타트업 (10인 미만)', intro:'대학생 러닝 크루·스포츠 동아리를 위한 스포츠웨어 브랜드입니다. 소규모 동아리도 환영합니다.', regions:['서울','경기 / 인천'], contact:'010-9999-8888', status:'공개' },
-];
-const SAMPLE_STU = [
-  { id:'s1', name:'연세대학교 밴드동아리 VIBE', univ:'연세대학교', type:'예술 / 공연', members:'85', region:'서울', intro:'창설 10년 전통의 밴드 동아리입니다. 매년 홍대 공연장에서 500석 규모의 정기 공연을 개최합니다.', colorClass:'', status:'공개' },
-  { id:'s2', name:'고려대학교 경영학생회', univ:'고려대학교', type:'학생회', members:'1200', region:'서울', intro:'고려대 경영대학 공식 학생회입니다. 신입생 OT(400명), 체육대회, 학술제 등 연 10회 이상 행사를 운영합니다.', colorClass:'alt1', status:'공개' },
-  { id:'s3', name:'서울대 축구 동아리 FC서울大', univ:'서울대학교', type:'스포츠', members:'60', region:'서울', intro:'창설 15년의 축구 동아리로 전국 대학 리그에 참가합니다. 유니폼·장비·스포츠음료 협찬 파트너를 찾습니다.', colorClass:'alt2', status:'공개' },
-  { id:'s4', name:'이화여대 사진 동아리 LENS', univ:'이화여자대학교', type:'예술 / 사진', members:'45', region:'서울', intro:'창설 8년의 사진 동아리로 매 학기 교내 갤러리에서 전시회를 개최합니다. 관람객 800명 이상 방문합니다.', colorClass:'alt3', status:'공개' },
-  { id:'s5', name:'한국외대 연극 동아리 극단 HUFS', univ:'한국외국어대학교', type:'예술 / 연극', members:'38', region:'서울', intro:'창설 20년의 연극 동아리입니다. 매년 학교 대강당(300석)에서 창작극 2회 공연을 진행합니다.', colorClass:'alt4', status:'공개' },
-  { id:'s6', name:'KAIST 창업 동아리 STARTUP K', univ:'KAIST', type:'창업 / IT', members:'52', region:'대전 / 충청', intro:'인증 창업동아리로 매 시즌 48시간 해커톤(150명 규모)을 개최합니다. IT·스타트업 후원사를 모집합니다.', colorClass:'alt5', status:'공개' },
-];
+const SAMPLE_BIZ = [];
+const SAMPLE_STU = [];
 
 /* ── 카드 렌더링 ── */
 const INDUSTRY_EMOJI = {'식음료':'☕','뷰티 / 화장품':'💄','패션 / 의류':'👗','IT / 앱서비스':'💻','교육 / 스터디':'🎓','금융 / 핀테크':'💳','스포츠 / 헬스':'🏃','엔터테인먼트':'🎬','기타':'🏢'};
@@ -623,10 +608,10 @@ function showSkeletons(gridId, count) {
 
 function renderGrid(gridId, items, renderFn) {
   const grid = document.getElementById(gridId);
-  const visible = items.filter(x => x.status === '공개' || !x.status);
+  const visible = items.filter(x => x.status === '공개');
   grid.innerHTML = visible.length
     ? visible.map(renderFn).join('')
-    : `<div class="empty-placeholder">아직 등록된 항목이 없습니다.</div>`;
+    : `<div class="empty-placeholder">아직 승인된 항목이 없습니다.</div>`;
 }
 
 /* ── 초기 로드 ── */

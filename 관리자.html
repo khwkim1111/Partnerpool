@@ -368,7 +368,7 @@
       <div class="tab-row">
         <button class="tab-btn active" onclick="setTab('clubs','all',this)">전체</button>
         <button class="tab-btn" onclick="setTab('clubs','검토 대기',this)">검토 대기</button>
-        <button class="tab-btn" onclick="setTab('clubs','승인 완료',this)">승인 완료</button>
+        <button class="tab-btn" onclick="setTab('clubs','공개',this)">승인 완료</button>
         <button class="tab-btn" onclick="setTab('clubs','거절',this)">거절</button>
       </div>
       <div class="toolbar">
@@ -391,7 +391,7 @@
       <div class="tab-row">
         <button class="tab-btn active" onclick="setTab('corps','all',this)">전체</button>
         <button class="tab-btn" onclick="setTab('corps','검토 대기',this)">검토 대기</button>
-        <button class="tab-btn" onclick="setTab('corps','승인 완료',this)">승인 완료</button>
+        <button class="tab-btn" onclick="setTab('corps','공개',this)">승인 완료</button>
         <button class="tab-btn" onclick="setTab('corps','거절',this)">거절</button>
       </div>
       <div class="toolbar">
@@ -414,7 +414,7 @@
       <div class="tab-row">
         <button class="tab-btn active" onclick="setTab('proposals','all',this)">전체</button>
         <button class="tab-btn" onclick="setTab('proposals','검토 대기',this)">검토 대기</button>
-        <button class="tab-btn" onclick="setTab('proposals','승인 완료',this)">승인 완료</button>
+        <button class="tab-btn" onclick="setTab('proposals','공개',this)">승인 완료</button>
         <button class="tab-btn" onclick="setTab('proposals','거절',this)">거절</button>
       </div>
       <div class="toolbar">
@@ -581,7 +581,7 @@ async function changeStatus(kind, id, status) {
       if (item) { item.status = status; lsSave(); render(); }
     }
     closeModal();
-    const msg = status === '승인 완료' ? '✅ 승인 완료했습니다.' : status === '거절' ? '❌ 거절 처리했습니다.' : '🔄 검토 대기로 변경했습니다.';
+    const msg = status === '공개' ? '✅ 승인 완료했습니다.' : status === '거절' ? '❌ 거절 처리했습니다.' : '🔄 검토 대기로 변경했습니다.';
     showToast(msg);
   } catch(e) {
     console.error(e);
@@ -624,7 +624,7 @@ function renderStats() {
   document.getElementById('st-clubs').textContent    = db.clubs.length;
   document.getElementById('st-corps').textContent    = db.corps.length;
   const pending  = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='검토 대기').length;
-  const approved = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='승인 완료').length;
+  const approved = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='공개').length;
   document.getElementById('st-pending').textContent  = pending;
   document.getElementById('st-approved').textContent = approved;
 }
@@ -718,7 +718,7 @@ function renderTable(type) {
 ══════════════════════════════ */
 function badge(s) {
   if (s==='검토 대기') return `<span class="badge b-pending">⏳ 검토 대기</span>`;
-  if (s==='승인 완료') return `<span class="badge b-approved">✅ 승인 완료</span>`;
+  if (s==='공개')      return `<span class="badge b-approved">✅ 승인 완료</span>`;
   if (s==='거절')      return `<span class="badge b-rejected">❌ 거절</span>`;
   return `<span class="badge">${s}</span>`;
 }
@@ -734,8 +734,10 @@ function snsBadges(sns) {
 function actionBtns(kind, id, status) {
   let html = `<button class="act act-detail" onclick="openModal('${kind}','${id}')">상세</button>`;
   if (status === '검토 대기') {
-    html += `<button class="act act-approve" onclick="changeStatus('${kind}','${id}','승인 완료')">승인</button>`;
+    html += `<button class="act act-approve" onclick="changeStatus('${kind}','${id}','공개')">승인</button>`;
     html += `<button class="act act-reject"  onclick="changeStatus('${kind}','${id}','거절')">거절</button>`;
+  } else if (status !== '거절') {
+    html += `<button class="act act-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">재검토</button>`;
   } else {
     html += `<button class="act act-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">재검토</button>`;
   }
@@ -805,7 +807,7 @@ function openModal(kind, id) {
 
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('modalActions').innerHTML = item.status === '검토 대기'
-    ? `<button class="ma-approve" onclick="changeStatus('${kind}','${id}','승인 완료')">✅ 승인하기</button>
+    ? `<button class="ma-approve" onclick="changeStatus('${kind}','${id}','공개')">✅ 승인하기</button>
        <button class="ma-reject"  onclick="changeStatus('${kind}','${id}','거절')">❌ 거절하기</button>`
     : `<button class="ma-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">🔄 검토 대기로 변경</button>`;
 
@@ -850,47 +852,24 @@ function showToast(msg) {
   5. Firestore Database → 데이터베이스 만들기 (테스트 모드)
   6. 규칙 탭에서 allow read, write: if true; 로 설정 (개발 중)
 ════════════════════════════════════════ -->
-<script type="module">
-  import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, onSnapshot,
-           doc, updateDoc, orderBy, query }         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  // ✏️ 여기에 본인 Firebase 설정값을 붙여넣으세요
-  const firebaseConfig = {
-  apiKey: "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
-  authDomain: "partenrpool-2026.firebaseapp.com",
-  projectId: "partenrpool-2026",
-  storageBucket: "partenrpool-2026.firebasestorage.app",
-  messagingSenderId: "47486097497",
-  appId: "1:47486097497:web:893f6b154a7f86cbd6b948",
-  measurementId: "G-RLV36KR76Y"
-};
-
-  if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-    try {
-      const app  = initializeApp(firebaseConfig);
-      const fsdb = getFirestore(app);
-
-      // 전역에서 changeStatus()가 Firestore를 호출할 수 있도록 노출
-      window.fsdb = {
-        collection: (col) => ({
-          orderBy: (field, dir) => ({
-            onSnapshot: (cb, eb) => {
-              const q = query(collection(fsdb, col), orderBy(field, dir));
-              return onSnapshot(q, cb, eb);
-            }
-          }),
-          doc: (id) => ({ update: (data) => updateDoc(doc(fsdb, col, id), data) })
-        })
-      };
-
-      window.usingFirebase = true;
-      console.log("✅ Firebase 연결 성공 — 실시간 Firestore 모드");
-    } catch(e) {
-      console.warn("Firebase 초기화 실패, localStorage 모드로 동작합니다.", e);
-    }
-  } else {
-    console.warn("⚠️ Firebase 설정값을 입력하세요. 현재 localStorage 모드입니다.");
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  try {
+    const _cfg = {
+      apiKey:            "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
+      authDomain:        "partenrpool-2026.firebaseapp.com",
+      projectId:         "partenrpool-2026",
+      storageBucket:     "partenrpool-2026.firebasestorage.app",
+      messagingSenderId: "47486097497",
+      appId:             "1:47486097497:web:893f6b154a7f86cbd6b948"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(_cfg);
+    window.fsdb = firebase.firestore();
+    window.usingFirebase = true;
+    console.log("✅ Firebase 관리자 연결 성공");
+  } catch(e) {
+    console.warn("Firebase 초기화 실패, localStorage 모드로 동작합니다.", e);
   }
 </script>
 </body>
@@ -1011,7 +990,7 @@ function renderStats() {
   document.getElementById('st-clubs').textContent = db.clubs.length;
   document.getElementById('st-corps').textContent = db.corps.length;
   const pending = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='검토 대기').length;
-  const approved = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='승인 완료').length;
+  const approved = [...db.clubs,...db.corps,...db.proposals].filter(x=>x.status==='공개').length;
   document.getElementById('st-pending').textContent = pending;
   document.getElementById('st-approved').textContent = approved;
 }
@@ -1100,7 +1079,7 @@ function renderTable(type) {
 ══════════════════════════════ */
 function badge(s) {
   if (s==='검토 대기') return `<span class="badge b-pending">⏳ 검토 대기</span>`;
-  if (s==='승인 완료') return `<span class="badge b-approved">✅ 승인 완료</span>`;
+  if (s==='공개')      return `<span class="badge b-approved">✅ 승인 완료</span>`;
   if (s==='거절')     return `<span class="badge b-rejected">❌ 거절</span>`;
   return `<span class="badge">${s}</span>`;
 }
@@ -1116,8 +1095,10 @@ function snsBadges(sns) {
 function actionBtns(kind, id, status) {
   let html = `<button class="act act-detail" onclick="openModal('${kind}','${id}')">상세</button>`;
   if (status === '검토 대기') {
-    html += `<button class="act act-approve" onclick="changeStatus('${kind}','${id}','승인 완료')">승인</button>`;
+    html += `<button class="act act-approve" onclick="changeStatus('${kind}','${id}','공개')">승인</button>`;
     html += `<button class="act act-reject"  onclick="changeStatus('${kind}','${id}','거절')">거절</button>`;
+  } else if (status !== '거절') {
+    html += `<button class="act act-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">재검토</button>`;
   } else {
     html += `<button class="act act-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">재검토</button>`;
   }
@@ -1203,7 +1184,7 @@ function openModal(kind, id) {
 
   document.getElementById('modalBody').innerHTML = bodyHtml;
   document.getElementById('modalActions').innerHTML = item.status === '검토 대기' ? `
-    <button class="ma-approve" onclick="changeStatus('${kind}','${id}','승인 완료')">✅ 승인하기</button>
+    <button class="ma-approve" onclick="changeStatus('${kind}','${id}','공개')">✅ 승인하기</button>
     <button class="ma-reject"  onclick="changeStatus('${kind}','${id}','거절')">❌ 거절하기</button>` :
     `<button class="ma-restore" onclick="changeStatus('${kind}','${id}','검토 대기')">🔄 검토 대기로 변경</button>`;
 

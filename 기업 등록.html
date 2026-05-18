@@ -408,7 +408,7 @@ async function submitForm() {
     plan:       selectedPlan ? selectedPlan.textContent : '베이직',
     date:       new Date().toLocaleDateString('ko-KR'),
     createdAt:  new Date().toISOString(),
-    status:     '공개'
+    status:     '검토 대기'
   };
 
   // localStorage에 항상 백업 저장
