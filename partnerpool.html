@@ -606,9 +606,16 @@ function showSkeletons(gridId, count) {
     Array(count).fill('<div class="skeleton-card"></div>').join('');
 }
 
-function renderGrid(gridId, items, renderFn) {
+function lsGetApproved(col) {
+  try {
+    const db = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[]}');
+    return (db[col] || []).filter(x => x.status === '공개');
+  } catch(e) { return []; }
+}
+
+function renderGrid(gridId, items, renderFn, alreadyFiltered) {
   const grid = document.getElementById(gridId);
-  const visible = items.filter(x => x.status === '공개');
+  const visible = alreadyFiltered ? items : items.filter(x => x.status === '공개');
   grid.innerHTML = visible.length
     ? visible.map(renderFn).join('')
     : `<div class="empty-placeholder">아직 승인된 항목이 없습니다.</div>`;
@@ -633,33 +640,70 @@ showSkeletons('stuGrid', 6);
     appId:             "1:47486097497:web:893f6b154a7f86cbd6b948"
   };
   let _auth = null;
+  let _fsdb = null;
   try {
     if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
     _auth = firebase.auth();
-    const _fsdb = firebase.firestore();
+    _fsdb = firebase.firestore();
 
-    // 가입 기업 현황 실시간 구독
-    _fsdb.collection('corps').orderBy('createdAt', 'desc')
+    // 가입 기업 현황 실시간 구독 (승인된 항목만)
+    _fsdb.collection('corps').where('status', '==', '공개')
       .onSnapshot(snap => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderGrid('bizGrid', items.length ? items : SAMPLE_BIZ, renderBizCard);
-      }, () => renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard));
+        renderGrid('bizGrid', items, renderBizCard, true);
+      }, () => renderGrid('bizGrid', lsGetApproved('corps'), renderBizCard, true));
 
-    // 학생단체 목록 실시간 구독
-    _fsdb.collection('clubs').orderBy('createdAt', 'desc')
+    // 학생단체 목록 실시간 구독 (승인된 항목만)
+    _fsdb.collection('clubs').where('status', '==', '공개')
       .onSnapshot(snap => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderGrid('stuGrid', items.length ? items : SAMPLE_STU, renderStuCard);
-      }, () => renderGrid('stuGrid', SAMPLE_STU, renderStuCard));
+        renderGrid('stuGrid', items, renderStuCard, true);
+      }, () => renderGrid('stuGrid', lsGetApproved('clubs'), renderStuCard, true));
 
     // 로그인 상태에 따라 네비 버튼 업데이트
     _auth.onAuthStateChanged(user => updateNavAuth(user));
     console.log('✅ Firebase 메인페이지 연동 완료');
   } catch(e) {
-    console.warn('Firebase 연결 실패, 샘플 데이터로 표시합니다.', e);
-    renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard);
-    renderGrid('stuGrid', SAMPLE_STU, renderStuCard);
+    console.warn('Firebase 연결 실패, localStorage로 표시합니다.', e);
+    renderGrid('bizGrid', lsGetApproved('corps'), renderBizCard, true);
+    renderGrid('stuGrid', lsGetApproved('clubs'), renderStuCard, true);
     updateNavAuth(null);
+  }
+
+  async function lookupRegisteredName(email) {
+    if (!_fsdb || !email) return;
+    if (sessionStorage.getItem('pp_registered_name')) return;
+    try {
+      const timeout = new Promise(resolve => setTimeout(() => resolve(null), 5000));
+      let snap = await Promise.race([
+        _fsdb.collection('clubs').where('email', '==', email).limit(1).get(),
+        timeout
+      ]);
+      if (snap && !snap.empty) {
+        sessionStorage.setItem('pp_registered_name', snap.docs[0].data().name);
+        sessionStorage.setItem('pp_registered_type', 'club');
+        updateNavDisplay();
+        return;
+      }
+      snap = await Promise.race([
+        _fsdb.collection('corps').where('email', '==', email).limit(1).get(),
+        timeout
+      ]);
+      if (snap && !snap.empty) {
+        sessionStorage.setItem('pp_registered_name', snap.docs[0].data().name);
+        sessionStorage.setItem('pp_registered_type', 'corp');
+        updateNavDisplay();
+      }
+    } catch(e) {
+      console.warn('등록명 조회 실패:', e);
+    }
+  }
+
+  function updateNavDisplay() {
+    const loginBtn = document.querySelector('.btn-ghost');
+    if (!loginBtn) return;
+    const registeredName = sessionStorage.getItem('pp_registered_name');
+    if (registeredName) loginBtn.textContent = registeredName + ' ▾';
   }
 
   function getKakaoUser() {
@@ -688,6 +732,14 @@ showSkeletons('stuGrid', 6);
     if (user) {
       const registeredName = sessionStorage.getItem('pp_registered_name');
       loginBtn.textContent = (registeredName || user.displayName) + ' ▾';
+
+      // 등록명 없으면 Firestore에서 이메일로 조회
+      if (!registeredName) {
+        const email = firebaseUser
+          ? (firebaseUser.email || '')
+          : (sessionStorage.getItem('pp_kakao_email') || '');
+        lookupRegisteredName(email);
+      }
       loginBtn.onclick = () => {
         if (!confirm('로그아웃 하시겠습니까?')) return;
         sessionStorage.removeItem('pp_kakao_login');
