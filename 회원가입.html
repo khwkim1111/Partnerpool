@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입 — Partner Pool</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F0F6FF; --surface:#fff; --surface2:#E6F1FB;
+    --border:#B5D4F4; --navy:#0C447C; --blue:#378ADD;
+    --club:#1976D2; --text:#1a1a2e; --muted:#6688aa;
+    --red:#ef4444; --green:#16a34a; --green-bg:#dcfce7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(55,138,221,0.08) 0%,transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(12,68,124,0.06) 0%,transparent 55%);pointer-events:none;z-index:0;}
+
+  /* 상단 바 */
+  .topbar{background:var(--navy);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;}
+  .logo{display:flex;align-items:center;gap:4px;cursor:pointer;}
+  .lp1{font-size:16px;font-weight:900;color:#fff;}
+  .ld{width:5px;height:5px;border-radius:50%;display:inline-block;margin:0 1px 2px;}
+  .ld1{background:#fff;} .ld2{background:#85B7EB;}
+  .lp2{font-size:16px;font-weight:900;color:#85B7EB;}
+  .topbar-right{font-size:13px;color:rgba(255,255,255,0.65);}
+  .topbar-right a{color:#85B7EB;text-decoration:none;font-weight:700;margin-left:6px;}
+  .topbar-right a:hover{text-decoration:underline;}
+
+  /* 스텝 */
+  .step-wrap{display:flex;align-items:center;justify-content:center;padding:28px 0 4px;position:relative;z-index:1;}
+  .step-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);transition:all 0.3s;}
+  .step-dot.active{border-color:var(--blue);color:var(--blue);box-shadow:0 0 0 4px rgba(55,138,221,0.15);}
+  .step-dot.done{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .step-line{width:52px;height:2px;background:var(--border);transition:background 0.3s;}
+  .step-line.done{background:var(--blue);}
+  .step-labels{display:flex;justify-content:center;padding:6px 0 0;position:relative;z-index:1;}
+  .step-lbl{font-size:11px;color:var(--muted);text-align:center;width:80px;transition:color 0.3s;}
+  .step-lbl.active{color:var(--blue);font-weight:700;}
+
+  /* 컨테이너 */
+  .container{max-width:500px;margin:0 auto;padding:24px 24px 80px;position:relative;z-index:1;flex:1;}
+
+  /* 카드 */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 40px;box-shadow:0 4px 24px rgba(12,68,124,0.07);position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy),var(--blue));}
+
+  .screen{display:none;}
+  .screen.active{display:block;animation:fadeUp 0.4s ease both;}
+
+  .card-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--navy);margin-bottom:6px;}
+  .card-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6;}
+
+  /* 역할 선택 */
+  .role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+  .role-btn{border:2px solid var(--border);border-radius:14px;padding:22px 14px;text-align:center;cursor:pointer;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);background:var(--surface2);}
+  .role-btn:hover{transform:translateY(-2px);border-color:var(--blue);}
+  .role-btn.selected.type-club{border-color:var(--club);background:rgba(25,118,210,0.07);box-shadow:0 0 0 3px rgba(25,118,210,0.1);}
+  .role-btn.selected.type-corp{border-color:var(--navy);background:rgba(12,68,124,0.07);box-shadow:0 0 0 3px rgba(12,68,124,0.1);}
+  .role-emoji{font-size:28px;margin-bottom:8px;display:block;}
+  .role-name{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+  .role-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+
+  /* 폼 */
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px;}
+  .field label .req{color:var(--red);margin-left:2px;}
+  .field input{width:100%;padding:12px 16px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:'Noto Sans KR',sans-serif;color:var(--text);outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  .field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,138,221,0.12);}
+  .field input.err{border-color:var(--red);}
+  .field-err{font-size:11px;color:var(--red);margin-top:4px;min-height:15px;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  /* 비밀번호 강도 */
+  .pw-bar{height:3px;border-radius:2px;background:var(--border);overflow:hidden;margin-top:6px;}
+  .pw-bar-fill{height:100%;border-radius:2px;width:0;transition:all 0.3s;}
+  .pw-hint{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* 구글 */
+  .btn-google{width:100%;padding:12px 20px;border-radius:12px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;}
+  .btn-google:hover{border-color:#4285F4;box-shadow:0 2px 12px rgba(66,133,244,0.15);}
+
+  .divider-line{display:flex;align-items:center;gap:12px;margin-bottom:16px;color:var(--muted);font-size:12px;}
+  .divider-line::before,.divider-line::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* 약관 */
+  .terms-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:4px 0;margin-bottom:16px;}
+  .terms-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.15s;user-select:none;}
+  .terms-item:hover{background:rgba(55,138,221,0.04);}
+  .terms-item.all-check{border-bottom:1px solid var(--border);font-weight:700;}
+  .check-box{width:17px;height:17px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:transparent;transition:all 0.2s;}
+  .terms-item.checked .check-box{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .terms-text{font-size:13px;flex:1;}
+  .terms-req{font-size:10px;color:var(--red);margin-left:4px;font-weight:700;}
+  .terms-link{font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto;white-space:nowrap;}
+  .terms-link:hover{text-decoration:underline;}
+
+  /* 에러 박스 */
+  .err-box{background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:11px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;display:none;}
+
+  /* 버튼 */
+  .btn-primary{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:all 0.3s;box-shadow:0 4px 20px rgba(12,68,124,0.25);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(12,68,124,0.3);}
+  .btn-primary:disabled{opacity:0.6;cursor:default;transform:none;}
+  .btn-back{width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer;margin-top:10px;transition:all 0.2s;}
+  .btn-back:hover{border-color:var(--blue);color:var(--navy);}
+
+  .bottom-link{text-align:center;margin-top:18px;font-size:13px;color:var(--muted);}
+  .bottom-link a{color:var(--blue);font-weight:700;text-decoration:none;margin-left:4px;}
+  .bottom-link a:hover{text-decoration:underline;}
+
+  /* 완료 */
+  .success-wrap{text-align:center;padding:12px 0;}
+  .success-icon{font-size:60px;margin-bottom:16px;animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;}
+  .success-title{font-family:'DM Serif Display',serif;font-size:22px;background:linear-gradient(135deg,var(--navy),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+  .success-sub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:22px;}
+  .role-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);color:var(--green);border:1px solid #86efac;padding:6px 16px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:20px;}
+
+  .spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes popIn{from{opacity:0;transform:scale(0.5);}to{opacity:1;transform:scale(1);}}
+
+  @media(max-width:480px){.field-row,.role-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo" onclick="location.href='partnerpool.html'">
+    <span class="lp1">Partner</span>
+    <span class="ld ld1"></span><span class="ld ld2"></span>
+    <span class="lp2">Pool</span>
+  </div>
+  <div class="topbar-right">이미 계정이 있으신가요? <a href="#" onclick="goLogin()">로그인</a></div>
+</div>
+
+<!-- 스텝 -->
+<div class="step-wrap">
+  <div class="step-dot active" id="sd1">1</div>
+  <div class="step-line" id="sl1"></div>
+  <div class="step-dot" id="sd2">2</div>
+  <div class="step-line" id="sl2"></div>
+  <div class="step-dot" id="sd3">✓</div>
+</div>
+<div class="step-labels">
+  <div class="step-lbl active" id="slb1">역할 선택</div>
+  <div class="step-lbl" id="slb2">정보 입력</div>
+  <div class="step-lbl" id="slb3">완료</div>
+</div>
+
+<div class="container">
+  <div class="card">
+
+    <!-- STEP 1: 역할 선택 -->
+    <div class="screen active" id="screen1">
+      <div class="card-title">회원가입</div>
+      <div class="card-sub">Partner Pool에 오신 것을 환영합니다.<br>먼저 어떤 역할로 가입하실지 선택해주세요.</div>
+
+      <div class="role-grid">
+        <div class="role-btn type-club" id="role-club" onclick="selectRole('club')">
+          <span class="role-emoji">🎓</span>
+          <span class="role-name">대학교 동아리</span>
+          <span class="role-desc">기업 협찬을<br>받고 싶어요</span>
+        </div>
+        <div class="role-btn type-corp" id="role-corp" onclick="selectRole('corp')">
+          <span class="role-emoji">🏢</span>
+          <span class="role-name">기업</span>
+          <span class="role-desc">동아리에<br>협찬하고 싶어요</span>
+        </div>
+      </div>
+
+      <button class="btn-google" onclick="signupWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Google로 빠르게 가입하기
+      </button>
+
+      <div class="divider-line">또는 이메일로 가입</div>
+
+      <button class="btn-primary" onclick="goScreen(2)">다음 단계 →</button>
+    </div>
+
+    <!-- STEP 2: 정보 입력 -->
+    <div class="screen" id="screen2">
+      <div class="card-title" id="step2Title">회원 정보 입력</div>
+      <div class="card-sub">아래 정보를 입력하고 계정을 만들어주세요.</div>
+
+      <div class="err-box" id="errBox"></div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>이름<span class="req">*</span></label>
+          <input type="text" id="name" placeholder="홍길동">
+          <div class="field-err" id="nameErr"></div>
+        </div>
+        <div class="field">
+          <label id="orgLabel">소속<span class="req">*</span></label>
+          <input type="text" id="org" placeholder="한양대학교">
+          <div class="field-err" id="orgErr"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>이메일<span class="req">*</span></label>
+        <input type="email" id="email" placeholder="example@email.com">
+        <div class="field-err" id="emailErr"></div>
+      </div>
+
+      <div class="field">
+        <label>비밀번호<span class="req">*</span> <span style="color:var(--muted);font-weight:300;font-size:11px;margin-left:4px;">8자 이상</span></label>
+        <input type="password" id="password" placeholder="••••••••" oninput="checkPwStrength(this.value)">
+        <div class="pw-bar"><div class="pw-bar-fill" id="pwBarFill"></div></div>
+        <div class="pw-hint" id="pwHint"></div>
+        <div class="field-err" id="pwErr"></div>
+      </div>
+
+      <div class="field">
+        <label>비밀번호 확인<span class="req">*</span></label>
+        <input type="password" id="password2" placeholder="••••••••">
+        <div class="field-err" id="pw2Err"></div>
+      </div>
+
+      <!-- 약관 -->
+      <div class="terms-box">
+        <div class="terms-item all-check" onclick="toggleAll()">
+          <div class="check-box" id="chkAll">✓</div>
+          <span class="terms-text" style="font-weight:700;">전체 동의</span>
+        </div>
+        <div class="terms-item" onclick="toggleTerm('chk1')">
+          <div class="check-box" id="chk1">✓</div>
+          <span class="terms-text">이용약관 동의<span class="terms-req">필수</span></span>
+          <a class="terms-link" href="#" onclick="event.stopPropagation()">보기</a>
+        </div>
+        <div class="terms-item" onclick="toggleTerm('chk2')">
+          <div class="check-box" id="chk2">✓</div>
+          <span class="terms-text">개인정보 처리방침 동의<span class="terms-req">필수</span></span>
+          <a class="terms-link" href="#" onclick="event.stopPropagation()">보기</a>
+        </div>
+        <div class="terms-item" onclick="toggleTerm('chk3')">
+          <div class="check-box" id="chk3">✓</div>
+          <span class="terms-text">마케팅 정보 수신 동의<span style="font-size:10px;color:var(--muted);margin-left:4px;">선택</span></span>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="signupBtn" onclick="signup()">가입하기</button>
+      <button class="btn-back" onclick="goScreen(1)">← 이전으로</button>
+    </div>
+
+    <!-- STEP 3: 완료 -->
+    <div class="screen" id="screen3">
+      <div class="success-wrap">
+        <div class="success-icon">🎉</div>
+        <div class="role-badge" id="roleBadge">🎓 대학교 동아리</div>
+        <div class="success-title">가입 완료!</div>
+        <div class="success-sub">Partner Pool 회원이 되셨습니다.<br>이제 로그인해서 서비스를 이용해보세요!</div>
+        <button class="btn-primary" onclick="goNext()" style="max-width:260px;margin:0 auto;display:block;">
+          로그인하러 가기 →
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-link">
+    이미 계정이 있으신가요? <a href="#" onclick="goLogin()">로그인하기 →</a>
+  </div>
+</div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const dest   = params.get('dest');
+  let selectedRole = dest || 'club';
+
+  // 초기 역할 선택 표시
+  selectRole(selectedRole);
+
+  function goLogin() { location.href = '로그인.html' + (dest ? '?dest='+dest : ''); }
+  function goNext()  { location.href = '로그인.html' + (dest ? '?dest='+dest : ''); }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-club').classList.toggle('selected', role==='club');
+    document.getElementById('role-corp').classList.toggle('selected', role==='corp');
+    document.getElementById('step2Title').textContent = role==='club' ? '🎓 동아리 정보 입력' : '🏢 기업 정보 입력';
+    document.getElementById('orgLabel').innerHTML = (role==='club' ? '소속 대학교' : '기업명') + '<span class="req">*</span>';
+    document.getElementById('org').placeholder = role==='club' ? '한양대학교' : '(주)파트너풀';
+    document.getElementById('roleBadge').textContent = role==='club' ? '🎓 대학교 동아리' : '🏢 기업';
+  }
+
+  function goScreen(n) {
+    if (n === 2 && !selectedRole) { alert('역할을 선택해주세요.'); return; }
+    document.querySelectorAll('.screen').forEach((s,i) => s.classList.toggle('active', i===n-1));
+    for (let i=1; i<=3; i++) {
+      const dot=document.getElementById('sd'+i), lbl=document.getElementById('slb'+i);
+      dot.classList.toggle('done',i<n); dot.classList.toggle('active',i===n);
+      if(i<n) dot.classList.remove('active'); if(i>n) dot.classList.remove('done','active');
+      lbl && lbl.classList.toggle('active',i===n);
+    }
+    for (let i=1;i<=2;i++) document.getElementById('sl'+i).classList.toggle('done',i<n);
+  }
+
+  function v(id) { const el=document.getElementById(id); return el?el.value.trim():''; }
+  function showErr(id,msg) { const el=document.getElementById(id); if(el){el.textContent=msg;} }
+  function clearErrs() { ['nameErr','orgErr','emailErr','pwErr','pw2Err'].forEach(id=>showErr(id,'')); document.getElementById('errBox').style.display='none'; }
+
+  function checkPwStrength(pw) {
+    const fill=document.getElementById('pwBarFill'), hint=document.getElementById('pwHint');
+    if (!pw) { fill.style.width='0'; fill.style.background=''; hint.textContent=''; return; }
+    let score=0;
+    if (pw.length>=8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const colors=['#ef4444','#f97316','#eab308','#22c55e'];
+    const labels=['매우 약함','약함','보통','강함'];
+    fill.style.width=(score*25)+'%';
+    fill.style.background=colors[score-1]||'#ef4444';
+    hint.textContent=labels[score-1]||'';
+    hint.style.color=colors[score-1]||'#ef4444';
+  }
+
+  function toggleTerm(id) {
+    const el=document.getElementById(id);
+    el.parentElement.classList.toggle('checked');
+    el.classList.toggle('checked') // visual only via parent
+    updateAllCheck();
+  }
+  // fix: toggle via parent
+  function toggleTerm(id) {
+    const item=document.getElementById(id).parentElement;
+    item.classList.toggle('checked');
+    updateAllCheck();
+  }
+  function toggleAll() {
+    const items=document.querySelectorAll('.terms-item:not(.all-check)');
+    const allChecked=[...items].every(i=>i.classList.contains('checked'));
+    items.forEach(i=>i.classList.toggle('checked',!allChecked));
+    document.querySelector('.terms-item.all-check').classList.toggle('checked',!allChecked);
+  }
+  function updateAllCheck() {
+    const items=document.querySelectorAll('.terms-item:not(.all-check)');
+    const all=[...items].every(i=>i.classList.contains('checked'));
+    document.querySelector('.terms-item.all-check').classList.toggle('checked',all);
+  }
+  function isTermChecked(id) { return document.getElementById(id).parentElement.classList.contains('checked'); }
+
+  function signup() {
+    clearErrs();
+    const name=v('name'), org=v('org'), email=v('email'), pw=v('password'), pw2=v('password2');
+    let valid=true;
+    if (!name) { showErr('nameErr','이름을 입력해주세요.'); valid=false; }
+    if (!org)  { showErr('orgErr', (selectedRole==='club'?'소속 대학교':'기업명')+'를 입력해주세요.'); valid=false; }
+    if (!email){ showErr('emailErr','이메일을 입력해주세요.'); valid=false; }
+    if (pw.length<8){ showErr('pwErr','비밀번호는 8자 이상이어야 합니다.'); valid=false; }
+    if (pw!==pw2){ showErr('pw2Err','비밀번호가 일치하지 않습니다.'); valid=false; }
+    if (!isTermChecked('chk1')||!isTermChecked('chk2')){ document.getElementById('errBox').textContent='필수 약관에 동의해주세요.'; document.getElementById('errBox').style.display='block'; valid=false; }
+    if (!valid) return;
+
+    const btn=document.getElementById('signupBtn');
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span>가입 중...';
+
+    if (window.fbAuth) {
+      window.fbAuth.createUserWithEmailAndPassword(email, pw)
+        .then(cred => {
+          // 이름 + 역할 저장
+          return Promise.all([
+            cred.user.updateProfile({ displayName: name }),
+            window.fsdb ? window.fsdb.collection('users').doc(cred.user.uid).set({
+              name, org, role: selectedRole, email, createdAt: new Date().toISOString()
+            }) : Promise.resolve()
+          ]);
+        })
+        .then(() => { btn.disabled=false; btn.textContent='가입하기'; goScreen(3); })
+        .catch(e => {
+          btn.disabled=false; btn.textContent='가입하기';
+          const msgs={
+            'auth/email-already-in-use':'이미 사용 중인 이메일입니다.',
+            'auth/invalid-email':'올바른 이메일 형식이 아닙니다.',
+            'auth/weak-password':'비밀번호가 너무 약합니다.',
+          };
+          document.getElementById('errBox').textContent = msgs[e.code]||'가입 중 오류: '+e.message;
+          document.getElementById('errBox').style.display='block';
+        });
+    } else {
+      // 폴백
+      setTimeout(() => { btn.disabled=false; btn.textContent='가입하기'; goScreen(3); }, 800);
+    }
+  }
+
+  function signupWithGoogle() {
+    if (window.fbAuth && window.GoogleAuthProvider) {
+      const provider = new window.GoogleAuthProvider();
+      window.fbAuth.signInWithPopup(provider)
+        .then(() => goScreen(3))
+        .catch(e => { document.getElementById('errBox').textContent='Google 가입 실패: '+e.message; document.getElementById('errBox').style.display='block'; });
+    } else {
+      goScreen(3);
+    }
+  }
+</script>
+
+<!-- 🔥 Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
+    authDomain:        "partenrpool-2026.firebaseapp.com",
+    projectId:         "partenrpool-2026",
+    storageBucket:     "partenrpool-2026.firebasestorage.app",
+    messagingSenderId: "47486097497",
+    appId:             "1:47486097497:web:893f6b154a7f86cbd6b948",
+    measurementId:     "G-RLV36KR76Y"
+  };
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    window.fbAuth             = firebase.auth();
+    window.GoogleAuthProvider = firebase.auth.GoogleAuthProvider;
+    window.fsdb               = firebase.firestore();
+    console.log('✅ Firebase 연결');
+  } catch(e) {
+    console.warn('Firebase 연결 실패, 폴백 모드', e);
+  }
+</script>
+</body>
+</html>

@@ -262,7 +262,7 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
     <a href="#features">주요 기능</a>
   </div>
   <div class="nav-right">
-    <button class="btn-ghost" onclick="window.open('로그인.html','_blank')">로그인</button>
+    <button class="btn-ghost" onclick="window.open('login-kakao.html','_blank')">로그인</button>
     <button class="btn-solid" onclick="go('club')">무료 가입</button>
   </div>
 </nav>
@@ -715,7 +715,7 @@ showSkeletons('stuGrid', 6);
           };
         } else {
           loginBtn.textContent = '로그인';
-          loginBtn.onclick = () => window.open('로그인.html', '_blank');
+          loginBtn.onclick = () => window.open('login-kakao.html', '_blank');
         }
       }
     });
@@ -736,7 +736,7 @@ showSkeletons('stuGrid', 6);
         window.open(destPage, '_blank');
       } else {
         // ❌ 로그인 안 됨 → 로그인 페이지로 (목적지 파라미터 포함)
-        window.open('로그인.html?dest=' + dest, '_blank');
+        window.open('login-kakao.html?dest=' + dest, '_blank');
       }
     } else {
       // Firebase 미연동: sessionStorage 폴백
@@ -744,7 +744,7 @@ showSkeletons('stuGrid', 6);
       if (session) {
         window.open(destPage, '_blank');
       } else {
-        window.open('로그인.html?dest=' + dest, '_blank');
+        window.open('login-kakao.html?dest=' + dest, '_blank');
       }
     }
   }
