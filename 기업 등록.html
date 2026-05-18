@@ -451,25 +451,31 @@ async function submitForm() {
     status:     '검토 대기'
   };
 
-  // localStorage에 항상 백업 저장
-  const existing = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[],"proposals":[]}');
-  newCorp.id = 'B' + Date.now();
-  existing.corps.push(newCorp);
-  localStorage.setItem('pp_db', JSON.stringify(existing));
+  // Firebase 저장 (필수)
+  if (typeof window._ppDb === 'undefined') {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '제출하기';
+    alert('데이터베이스 연결에 실패했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
+    return;
+  }
 
-  // Firebase에 저장 시도 (8초 타임아웃)
-  if (typeof window._ppDb !== 'undefined') {
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
-    try {
-      await Promise.race([window._ppDb.collection('corps').add(newCorp), timeout]);
-      console.log('✅ Firebase 저장 완료');
-    } catch (err) {
-      console.warn('Firebase 저장 실패:', err.code || err.message);
-    }
+  try {
+    const docRef = await window._ppDb.collection('corps').add(newCorp);
+    newCorp.id = docRef.id;
+    console.log('✅ Firebase 저장 완료:', docRef.id);
+  } catch (err) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '제출하기';
+    const msg = err.code === 'permission-denied'
+      ? 'Firebase 보안 규칙이 쓰기를 차단하고 있습니다.\nFirebase 콘솔 → Firestore → 규칙 탭에서 allow write: if true; 로 변경해주세요.'
+      : `저장 실패: ${err.message}`;
+    alert(msg);
+    return;
   }
 
   sessionStorage.setItem('pp_registered_name', newCorp.name);
   sessionStorage.setItem('pp_registered_type', 'corp');
+  localStorage.setItem('pp_my_reg', JSON.stringify({ ...newCorp, _type: 'corp' }));
 
   document.getElementById('formArea').style.display = 'none';
   document.getElementById('successArea').style.display = 'block';

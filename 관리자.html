@@ -514,7 +514,8 @@ function logout() {
    데이터 초기화 (Firebase or localStorage)
 ══════════════════════════════ */
 function initData() {
-  if (usingFirebase && window.fsdb) {
+  if (window.fsdb) {
+    usingFirebase = true;
     startFirebaseListeners();
   } else {
     db = lsLoad();

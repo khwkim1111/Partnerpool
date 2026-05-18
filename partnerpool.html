@@ -627,18 +627,18 @@ showSkeletons('stuGrid', 6);
     _auth = firebase.auth();
     _fsdb = firebase.firestore();
 
-    // 가입 기업 현황 실시간 구독 (승인된 항목만)
-    _fsdb.collection('corps').where('status', '==', '공개')
+    // 가입 기업 현황 실시간 구독
+    _fsdb.collection('corps')
       .onSnapshot(snap => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderGrid('bizGrid', items, renderBizCard, true);
+        renderGrid('bizGrid', items, renderBizCard, false);
       }, () => renderGrid('bizGrid', lsGetApproved('corps'), renderBizCard, true));
 
-    // 학생단체 목록 실시간 구독 (승인된 항목만)
-    _fsdb.collection('clubs').where('status', '==', '공개')
+    // 학생단체 목록 실시간 구독
+    _fsdb.collection('clubs')
       .onSnapshot(snap => {
         const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderGrid('stuGrid', items, renderStuCard, true);
+        renderGrid('stuGrid', items, renderStuCard, false);
       }, () => renderGrid('stuGrid', lsGetApproved('clubs'), renderStuCard, true));
 
     // 로그인 상태에 따라 네비 버튼 업데이트
@@ -690,6 +690,21 @@ showSkeletons('stuGrid', 6);
   }
 
   async function loadAndShowHeroCard(email, kakaoId) {
+    // 1) localStorage 우선 확인 (가장 빠르고 확실)
+    try {
+      const cached = localStorage.getItem('pp_my_reg');
+      if (cached) {
+        const data = JSON.parse(cached);
+        const type = data._type || 'club';
+        sessionStorage.setItem('pp_registered_name', data.name);
+        sessionStorage.setItem('pp_registered_type', type);
+        updateNavDisplay();
+        showHeroCard(data, type);
+        return;
+      }
+    } catch(e) {}
+
+    // 2) Firestore fallback
     if (!_fsdb || (!email && !kakaoId)) return;
     try {
       const timeout = new Promise(resolve => setTimeout(() => resolve(null), 5000));
@@ -708,7 +723,8 @@ showSkeletons('stuGrid', 6);
           ]);
         }
         if (snap && !snap.empty) {
-          const data = snap.docs[0].data();
+          const data = { ...snap.docs[0].data(), _type: type };
+          localStorage.setItem('pp_my_reg', JSON.stringify(data));
           sessionStorage.setItem('pp_registered_name', data.name);
           sessionStorage.setItem('pp_registered_type', type);
           updateNavDisplay();
