@@ -411,27 +411,27 @@ async function submitForm() {
     status:     '공개'
   };
 
-  try {
-    if (typeof window._ppDb !== 'undefined') {
-      await window._ppDb.collection('corps').add(newCorp);
-    } else {
-      const existing = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[],"proposals":[]}');
-      newCorp.id = 'B' + Date.now();
-      existing.corps.push(newCorp);
-      localStorage.setItem('pp_db', JSON.stringify(existing));
+  // localStorage에 항상 백업 저장
+  const existing = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[],"proposals":[]}');
+  newCorp.id = 'B' + Date.now();
+  existing.corps.push(newCorp);
+  localStorage.setItem('pp_db', JSON.stringify(existing));
+
+  // Firebase에 저장 시도 (8초 타임아웃)
+  if (typeof window._ppDb !== 'undefined') {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
+    try {
+      await Promise.race([window._ppDb.collection('corps').add(newCorp), timeout]);
+      console.log('✅ Firebase 저장 완료');
+    } catch (err) {
+      console.warn('Firebase 저장 실패:', err.code || err.message);
     }
-
-    document.getElementById('formArea').style.display = 'none';
-    document.getElementById('successArea').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => { window.location.href = 'partnerpool.html'; }, 2500);
-
-  } catch (err) {
-    console.error(err);
-    alert('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-    submitBtn.disabled = false;
-    submitBtn.textContent = '등록 신청하기';
   }
+
+  document.getElementById('formArea').style.display = 'none';
+  document.getElementById('successArea').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => { window.location.href = 'partnerpool.html'; }, 2500);
 }
 </script>
 

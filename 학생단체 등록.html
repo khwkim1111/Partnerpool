@@ -526,29 +526,31 @@ async function submitForm() {
     status: '공개'
   };
 
-  try {
-    if (typeof db !== 'undefined') {
-      // ── Firebase 연동 시 ──
-      await db.collection('clubs').add(newClub);
-    } else {
-      // ── Firebase 미연동 시 localStorage 폴백 ──
-      const existing = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[],"proposals":[]}');
-      newClub.id = 'C' + Date.now();
-      existing.clubs.push(newClub);
-      localStorage.setItem('pp_db', JSON.stringify(existing));
+  // localStorage에 항상 백업 저장
+  const existing = JSON.parse(localStorage.getItem('pp_db') || '{"clubs":[],"corps":[],"proposals":[]}');
+  newClub.id = 'C' + Date.now();
+  existing.clubs.push(newClub);
+  localStorage.setItem('pp_db', JSON.stringify(existing));
+
+  // Firebase에 저장 시도 (8초 타임아웃)
+  if (typeof db !== 'undefined') {
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000));
+    try {
+      await Promise.race([db.collection('clubs').add(newClub), timeout]);
+      console.log('✅ Firebase 저장 완료');
+    } catch (err) {
+      if (err.message === 'timeout') {
+        console.warn('Firebase 저장 타임아웃, localStorage에만 저장됨');
+      } else {
+        console.warn('Firebase 저장 실패:', err.code, err.message);
+      }
     }
-
-    document.getElementById('formArea').style.display = 'none';
-    document.getElementById('successArea').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => { window.location.href = 'partnerpool.html'; }, 2500);
-
-  } catch (err) {
-    console.error(err);
-    alert('제출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-    submitBtn.disabled = false;
-    submitBtn.textContent = '🎓 학생단체 등록 신청하기';
   }
+
+  document.getElementById('formArea').style.display = 'none';
+  document.getElementById('successArea').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => { window.location.href = 'partnerpool.html'; }, 2500);
 }
 </script>
 
