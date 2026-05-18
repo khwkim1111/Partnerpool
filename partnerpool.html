@@ -634,59 +634,10 @@ showSkeletons('bizGrid', 6);
 showSkeletons('stuGrid', 6);
 </script>
 
-<!-- 🔥 Firebase 연동 -->
-<script type="module">
-  import { initializeApp }  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, query,
-           where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey:            "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
-    authDomain:        "partenrpool-2026.firebaseapp.com",
-    projectId:         "partenrpool-2026",
-    storageBucket:     "partenrpool-2026.firebasestorage.app",
-    messagingSenderId: "47486097497",
-    appId:             "1:47486097497:web:893f6b154a7f86cbd6b948",
-    measurementId:     "G-RLV36KR76Y"
-  };
-
-  try {
-    const app  = initializeApp(firebaseConfig);
-    const fsdb = getFirestore(app);
-
-    // 가입 기업 현황 실시간 구독
-    const bizQ = query(
-      collection(fsdb, 'corps'),
-      where('status', '==', '공개'),
-      orderBy('createdAt', 'desc')
-    );
-    onSnapshot(bizQ, snap => {
-      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderGrid('bizGrid', items.length ? items : SAMPLE_BIZ, renderBizCard);
-    }, () => renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard));
-
-    // 학생단체 목록 실시간 구독
-    const stuQ = query(
-      collection(fsdb, 'clubs'),
-      where('status', '==', '공개'),
-      orderBy('createdAt', 'desc')
-    );
-    onSnapshot(stuQ, snap => {
-      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderGrid('stuGrid', items.length ? items : SAMPLE_STU, renderStuCard);
-    }, () => renderGrid('stuGrid', SAMPLE_STU, renderStuCard));
-
-    console.log('✅ Firebase 메인페이지 연동 완료');
-  } catch(e) {
-    console.warn('Firebase 연결 실패, 샘플 데이터로 표시합니다.', e);
-    renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard);
-    renderGrid('stuGrid', SAMPLE_STU, renderStuCard);
-  }
-</script>
-
-<!-- 🔥 Firebase Auth — 로그인 상태 체크 -->
+<!-- 🔥 Firebase (compat SDK — 단일 초기화) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
   const _fbConfig = {
     apiKey:            "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
@@ -700,11 +651,29 @@ showSkeletons('stuGrid', 6);
   try {
     if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
     _auth = firebase.auth();
+    const _fsdb = firebase.firestore();
+
+    // 가입 기업 현황 실시간 구독
+    _fsdb.collection('corps').orderBy('createdAt', 'desc')
+      .onSnapshot(snap => {
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderGrid('bizGrid', items.length ? items : SAMPLE_BIZ, renderBizCard);
+      }, () => renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard));
+
+    // 학생단체 목록 실시간 구독
+    _fsdb.collection('clubs').orderBy('createdAt', 'desc')
+      .onSnapshot(snap => {
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderGrid('stuGrid', items.length ? items : SAMPLE_STU, renderStuCard);
+      }, () => renderGrid('stuGrid', SAMPLE_STU, renderStuCard));
+
     // 로그인 상태에 따라 네비 버튼 업데이트
     _auth.onAuthStateChanged(user => updateNavAuth(user));
-    console.log('✅ Firebase Auth 메인 연결');
+    console.log('✅ Firebase 메인페이지 연동 완료');
   } catch(e) {
-    console.warn('Firebase Auth 연결 실패, 폴백 모드', e);
+    console.warn('Firebase 연결 실패, 샘플 데이터로 표시합니다.', e);
+    renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard);
+    renderGrid('stuGrid', SAMPLE_STU, renderStuCard);
     updateNavAuth(null);
   }
 
