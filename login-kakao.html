@@ -141,8 +141,6 @@ const params = new URLSearchParams(location.search);
 const dest = params.get('dest');
 
 const KAKAO_JAVASCRIPT_KEY = '4e83c1cca4704d79158751380a022925';
-const KAKAO_TOKEN_ENDPOINT = '';
-const KAKAO_REDIRECT_URI = 'https://thunderous-profiterole-7468c9.netlify.app/login-kakao.html';
 
 const firebaseConfig = {
   apiKey:            "AIzaSyCS1eNwLvUikT1HAw1sBRkqiZrYTMPInRM",
@@ -226,43 +224,36 @@ function loginWithKakao() {
   }
   if (!Kakao.isInitialized()) Kakao.init(KAKAO_JAVASCRIPT_KEY);
 
-  setButtonLoading('kakaoBtn', true, '카카오로 이동 중...', true);
-  Kakao.Auth.authorize({
-    redirectUri: KAKAO_REDIRECT_URI,
-    state: dest || 'home'
-  });
-}
+  setButtonLoading('kakaoBtn', true, '카카오 확인 중...', true);
+  Kakao.Auth.login({
+    scope: 'profile_nickname,account_email',
+    success: function() {
+      Kakao.API.request({
+        url: '/v2/user/me',
+        success: function(res) {
+          const kakaoAccount = res.kakao_account || {};
+          const profile = kakaoAccount.profile || {};
 
-async function handleKakaoRedirect() {
-  const code = params.get('code');
-  if (!code) return;
+          sessionStorage.setItem('pp_kakao_login', 'true');
+          sessionStorage.setItem('pp_kakao_id', String(res.id || ''));
+          sessionStorage.setItem('pp_kakao_email', kakaoAccount.email || '');
+          sessionStorage.setItem('pp_kakao_name', profile.nickname || '');
 
-  clearErr();
-  showOk('카카오 로그인을 확인하고 있습니다.');
-
-  if (!KAKAO_TOKEN_ENDPOINT) {
-    showErr('카카오 로그인 코드는 받았습니다. Firebase와 연결하려면 KAKAO_TOKEN_ENDPOINT에 Cloud Functions 또는 서버 주소를 입력해주세요.');
-    history.replaceState({}, document.title, KAKAO_REDIRECT_URI);
-    return;
-  }
-
-  try {
-    const res = await fetch(KAKAO_TOKEN_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, redirectUri: KAKAO_REDIRECT_URI, dest })
-    });
-    if (!res.ok) throw new Error('카카오 로그인 처리에 실패했습니다.');
-    const data = await res.json();
-
-    if (data.firebaseCustomToken && window.fbAuth) {
-      await window.fbAuth.signInWithCustomToken(data.firebaseCustomToken);
+          goDestination();
+        },
+        fail: function(error) {
+          setButtonLoading('kakaoBtn', false);
+          showErr('카카오 사용자 정보를 가져오지 못했습니다.');
+          console.warn(error);
+        }
+      });
+    },
+    fail: function(error) {
+      setButtonLoading('kakaoBtn', false);
+      showErr('카카오 로그인에 실패했습니다.');
+      console.warn(error);
     }
-    sessionStorage.setItem('pp_kakao_login', 'true');
-    goDestination();
-  } catch(e) {
-    showErr(e.message || '카카오 로그인 중 오류가 발생했습니다.');
-  }
+  });
 }
 
 function loginWithGoogle() {
@@ -331,8 +322,6 @@ if (window.fbAuth) {
     if (user && !params.get('code')) goDestination();
   });
 }
-
-handleKakaoRedirect();
 </script>
 </body>
 </html>
