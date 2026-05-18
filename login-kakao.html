@@ -226,7 +226,6 @@ function loginWithKakao() {
 
   setButtonLoading('kakaoBtn', true, '카카오 확인 중...', true);
   Kakao.Auth.login({
-    scope: 'profile_nickname,account_email',
     success: function() {
       Kakao.API.request({
         url: '/v2/user/me',
