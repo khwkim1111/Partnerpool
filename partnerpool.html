@@ -255,8 +255,8 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
     <span class="p2">Pool</span>
   </div>
   <div class="nav-links">
-    <a href="#biz-listings">기업 협찬 공고</a>
-    <a href="#stu-listings">학생 단체 모집</a>
+    <a href="#biz-listings">가입 기업 현황</a>
+    <a href="#stu-listings">학생단체 목록</a>
     <a href="#bidir">양방향 네트워크</a>
     <a href="#process">이용 방법</a>
     <a href="#features">주요 기능</a>
@@ -308,33 +308,33 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
   <div class="stat-item"><div class="stat-num">0개</div><div class="stat-label">현재 전용 오프라인 협찬 플랫폼</div></div>
 </div>
 
-<!-- ── 기업 협찬 공고 ── -->
+<!-- ── 가입 기업 현황 ── -->
 <section class="sec-wrap" id="biz-listings">
   <div class="sec-header">
-    <div class="section-tag">FOR STUDENTS</div>
-    <div class="section-title">기업 협찬 공고 <span style="font-size:18px;color:#888;font-weight:500">— 지금 신청 가능한 협찬</span></div>
-    <div class="section-sub">기업이 직접 올린 협찬 공고입니다. 조건이 맞으면 바로 신청하세요.</div>
+    <div class="section-tag">REGISTERED COMPANIES</div>
+    <div class="section-title">가입 기업 현황</div>
+    <div class="section-sub">PartnerPool에 등록된 기업·브랜드 목록입니다. 협찬을 원하는 학생단체라면 연락해보세요.</div>
   </div>
   <div class="biz-grid" id="bizGrid">
-    <div class="loading-placeholder">공고를 불러오는 중...</div>
+    <div class="loading-placeholder">기업 목록을 불러오는 중...</div>
   </div>
   <div style="text-align:center">
-    <button class="view-all" onclick="loadMoreBiz()">기업 협찬 공고 전체보기 →</button>
+    <button class="view-all" onclick="go('corp')">기업으로 등록하기 →</button>
   </div>
 </section>
 
-<!-- ── 학생 단체 협찬 요청글 ── -->
+<!-- ── 학생단체 목록 ── -->
 <section class="sec-wrap gray" id="stu-listings">
   <div class="sec-header">
-    <div class="section-tag">FOR BRANDS</div>
-    <div class="section-title">학생 단체 협찬 요청 <span style="font-size:18px;color:#888;font-weight:500">— 협찬을 기다리는 단체</span></div>
-    <div class="section-sub">학생회·동아리가 직접 올린 협찬 요청글입니다. 마음에 드는 단체에 먼저 제안해보세요.</div>
+    <div class="section-tag">STUDENT GROUPS</div>
+    <div class="section-title">학생단체 목록</div>
+    <div class="section-sub">PartnerPool에 등록된 학생회·동아리 목록입니다. 협찬하고 싶은 단체에 직접 제안해보세요.</div>
   </div>
   <div class="stu-grid" id="stuGrid">
-    <div class="loading-placeholder">등록된 단체를 불러오는 중...</div>
+    <div class="loading-placeholder">단체 목록을 불러오는 중...</div>
   </div>
   <div style="text-align:center">
-    <button class="view-all" onclick="loadMoreStu()">학생 단체 전체보기 →</button>
+    <button class="view-all" onclick="go('club')">학생단체로 등록하기 →</button>
   </div>
 </section>
 
@@ -547,65 +547,69 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
 </style>
 
 <script>
-/* ── Firebase 폴백 샘플 데이터 ── */
+/* ── 샘플 데이터 (Firebase 미연결 시 표시) ── */
 const SAMPLE_BIZ = [
-  { id:'b1', emoji:'☕', company:'카페베네', category:'F&B · 음료', title:'대학 축제·MT 음료 현물 협찬', description:'50인 이상 행사 대상으로 아메리카노·라떼 음료 쿠폰 최대 200매를 협찬합니다. 행사 전후 SNS 1회 이상 홍보 요청.', tags:['현물협찬','음료쿠폰','SNS홍보'], tagColors:['','','green'], deadline:'D-7', isNew:true, status:'공개' },
-  { id:'b2', emoji:'🛒', company:'CU편의점', category:'유통 · 편의점', title:'학생회 행사 간식·음료 박스 지원', description:'학생회 주관 공식 행사에 한해 간식·음료 박스(3만원 상당) 지원. 행사 현장 CU 배너 부착 및 영수증 인증 필수.', tags:['간식협찬','공식행사','배너부착'], tagColors:['','green','orange'], deadline:'D-14', isNew:false, status:'공개' },
-  { id:'b3', emoji:'💳', company:'토스뱅크', category:'핀테크 · 금융', title:'대학생 체크카드 발급 이벤트 제휴', description:'학생회와 제휴하여 신입생 OT·MT 등 행사에서 카드 발급 부스 운영. 발급 건당 학생단체에 리워드 지급.', tags:['리워드지급','부스운영','신입생행사'], tagColors:['','blue','green'], deadline:'D-21', isNew:true, status:'공개' },
-  { id:'b4', emoji:'👟', company:'닥터마틴', category:'패션 · 신발', title:'캠퍼스 서포터즈 모집 — 봄 시즌', description:'대학 동아리 단위로 활동하는 캠퍼스 서포터즈 모집. 제품 착용 인증샷 및 인스타그램 릴스 게시 활동.', tags:['서포터즈','제품협찬','SNS활동'], tagColors:['','orange','green'], deadline:'D-3', isNew:false, status:'공개' },
-  { id:'b5', emoji:'🎓', company:'해커스어학원', category:'교육 · 어학', title:'토익 무료 수강권 협찬 — 학생회 배포용', description:'학생회를 통해 토익 기초반 수강권 50매 배포. 학교 공식 채널 홍보 1회 및 게시판 포스터 부착 조건.', tags:['수강권','학생회','무료협찬'], tagColors:['','blue','green'], deadline:'D-30', isNew:false, status:'공개' },
-  { id:'b6', emoji:'🚀', company:'배달의민족', category:'앱서비스 · O2O', title:'동아리 회식 할인 쿠폰 제휴', description:'동아리 단위 신규 가입 이벤트 진행. 가입 인증 시 1인당 5,000원 할인쿠폰 제공. 최대 30명 규모 동아리.', tags:['쿠폰제공','동아리','앱설치'], tagColors:['','orange',''], deadline:'D-10', isNew:false, status:'공개' },
+  { id:'b1', name:'카페베네', industry:'식음료', size:'중소기업 (10~300인)', intro:'전국 대학가 매장을 보유한 카페 브랜드입니다. 학생 행사·MT·축제에 음료 협찬을 적극 지원합니다.', regions:['서울','경기 / 인천'], contact:'010-1234-5678', status:'공개' },
+  { id:'b2', name:'토스뱅크', industry:'금융 / 핀테크', size:'대기업 (1000인 이상)', intro:'대학생 타깃 체크카드·금융 서비스를 운영 중입니다. 신입생 OT·학생회 행사와의 제휴를 환영합니다.', regions:['지역 무관'], contact:'02-1234-5678', status:'공개' },
+  { id:'b3', name:'닥터마틴 코리아', industry:'패션 / 의류', size:'중견기업 (300~1000인)', intro:'글로벌 신발 브랜드의 한국 공식 유통사입니다. 캠퍼스 서포터즈 및 동아리 협찬 파트너를 모집합니다.', regions:['서울'], contact:'02-9876-5432', status:'공개' },
+  { id:'b4', name:'해커스어학원', industry:'교육 / 스터디', size:'중소기업 (10~300인)', intro:'토익·토플·오픽 전문 어학원입니다. 학생회를 통한 수강권 배포 및 홍보 협찬을 진행합니다.', regions:['서울','경기 / 인천','부산 / 경남'], contact:'02-5678-1234', status:'공개' },
+  { id:'b5', name:'배달의민족', industry:'IT / 앱서비스', size:'대기업 (1000인 이상)', intro:'국내 1위 배달 앱 서비스입니다. 동아리·학생회 회식 할인 쿠폰 제휴 프로그램을 운영합니다.', regions:['지역 무관'], contact:'1600-0000', status:'공개' },
+  { id:'b6', name:'어퍼풋', industry:'스포츠 / 헬스', size:'스타트업 (10인 미만)', intro:'대학생 러닝 크루·스포츠 동아리를 위한 스포츠웨어 브랜드입니다. 소규모 동아리도 환영합니다.', regions:['서울','경기 / 인천'], contact:'010-9999-8888', status:'공개' },
 ];
 const SAMPLE_STU = [
-  { id:'s1', emoji:'🎵', group:'연세대학교 밴드동아리 VIBE', univ:'연세대학교 · 창설 10년', members:'85', title:'5월 정기 공연 협찬사 모집 — 음료·굿즈', description:'홍대 공연장 500석 규모 정기공연 예정. 음료 현물 또는 굿즈 제작비 협찬 희망.', tags:['공연행사','500명관객','로고노출'], tagColors:['','green','orange'], eventDate:'5월 17일', colorClass:'', status:'공개' },
-  { id:'s2', emoji:'🏛️', group:'고려대학교 경영학생회', univ:'고려대학교 · 공식 학생회', members:'1,200', title:'2025 신입생 환영회 F&B 협찬 모집', description:'신입생 400명 규모 OT 행사. 음료·간식 현물 협찬 또는 쿠폰 협찬 모두 가능.', tags:['OT행사','400명규모','SNS홍보'], tagColors:['','green',''], eventDate:'3월 8일', colorClass:'alt1', status:'공개' },
-  { id:'s3', emoji:'⚽', group:'서울대 축구 동아리 FC서울大', univ:'서울대학교 · 창설 15년', members:'60', title:'대학리그 유니폼·장비 후원 기업 모집', description:'대학 축구 리그 참가 예정. 유니폼 제작비 또는 스포츠 음료 현물 협찬 희망.', tags:['스포츠','유니폼로고','리그경기'], tagColors:['','orange','green'], eventDate:'4~6월', colorClass:'alt2', status:'공개' },
-  { id:'s4', emoji:'📸', group:'이화여대 사진 동아리 LENS', univ:'이화여자대학교 · 창설 8년', members:'45', title:'봄 사진전 협찬사 모집 — 카페·뷰티 브랜드', description:'교내 갤러리 전시 2주간 진행. 관람객 약 800명 예상. 협찬 브랜드 배너 설치 및 팸플릿 광고면 제공.', tags:['전시행사','800명관람','배너노출'], tagColors:['','green','orange'], eventDate:'4/14~4/28', colorClass:'alt3', status:'공개' },
-  { id:'s5', emoji:'🎭', group:'한국외대 연극 동아리 극단 HUFS', univ:'한국외국어대학교 · 창설 20년', members:'38', title:'창작 연극 공연 협찬 — 소품비 및 의상 지원', description:'학교 대강당 300석 규모 2회 공연. 소품·의상비 협찬 또는 프로그램북 광고 협찬 희망.', tags:['연극공연','300석규모','유튜브노출'], tagColors:['','green',''], eventDate:'6월 5·6일', colorClass:'alt4', status:'공개' },
-  { id:'s6', emoji:'💻', group:'KAIST 창업 동아리 STARTUP K', univ:'KAIST · 인증 창업동아리', members:'52', title:'해커톤 행사 후원 기업 모집 — IT·스타트업', description:'48시간 해커톤 참가자 150명 규모. 시상금·식음료 협찬 또는 멘토 파견 협력 희망.', tags:['해커톤','IT스타트업','150명'], tagColors:['','green','orange'], eventDate:'시즌 상시', colorClass:'alt5', status:'공개' },
+  { id:'s1', name:'연세대학교 밴드동아리 VIBE', univ:'연세대학교', type:'예술 / 공연', members:'85', region:'서울', intro:'창설 10년 전통의 밴드 동아리입니다. 매년 홍대 공연장에서 500석 규모의 정기 공연을 개최합니다.', colorClass:'', status:'공개' },
+  { id:'s2', name:'고려대학교 경영학생회', univ:'고려대학교', type:'학생회', members:'1200', region:'서울', intro:'고려대 경영대학 공식 학생회입니다. 신입생 OT(400명), 체육대회, 학술제 등 연 10회 이상 행사를 운영합니다.', colorClass:'alt1', status:'공개' },
+  { id:'s3', name:'서울대 축구 동아리 FC서울大', univ:'서울대학교', type:'스포츠', members:'60', region:'서울', intro:'창설 15년의 축구 동아리로 전국 대학 리그에 참가합니다. 유니폼·장비·스포츠음료 협찬 파트너를 찾습니다.', colorClass:'alt2', status:'공개' },
+  { id:'s4', name:'이화여대 사진 동아리 LENS', univ:'이화여자대학교', type:'예술 / 사진', members:'45', region:'서울', intro:'창설 8년의 사진 동아리로 매 학기 교내 갤러리에서 전시회를 개최합니다. 관람객 800명 이상 방문합니다.', colorClass:'alt3', status:'공개' },
+  { id:'s5', name:'한국외대 연극 동아리 극단 HUFS', univ:'한국외국어대학교', type:'예술 / 연극', members:'38', region:'서울', intro:'창설 20년의 연극 동아리입니다. 매년 학교 대강당(300석)에서 창작극 2회 공연을 진행합니다.', colorClass:'alt4', status:'공개' },
+  { id:'s6', name:'KAIST 창업 동아리 STARTUP K', univ:'KAIST', type:'창업 / IT', members:'52', region:'대전 / 충청', intro:'인증 창업동아리로 매 시즌 48시간 해커톤(150명 규모)을 개최합니다. IT·스타트업 후원사를 모집합니다.', colorClass:'alt5', status:'공개' },
 ];
 
 /* ── 카드 렌더링 ── */
+const INDUSTRY_EMOJI = {'식음료':'☕','뷰티 / 화장품':'💄','패션 / 의류':'👗','IT / 앱서비스':'💻','교육 / 스터디':'🎓','금융 / 핀테크':'💳','스포츠 / 헬스':'🏃','엔터테인먼트':'🎬','기타':'🏢'};
+
 function renderBizCard(d) {
-  const tags = (d.tags||[]).map((t,i) => `<span class="biz-tag ${(d.tagColors||[])[i]||''}">${t}</span>`).join('');
+  const emoji = d.emoji || INDUSTRY_EMOJI[d.industry] || '🏢';
+  const regions = Array.isArray(d.regions) ? d.regions.slice(0,3).map(r=>`<span class="biz-tag">${r}</span>`).join('') : '';
   return `
     <div class="biz-card">
       <div class="biz-card-header">
-        <div class="biz-logo">${d.emoji||'🏢'}</div>
+        <div class="biz-logo">${emoji}</div>
         <div>
-          <div class="biz-name">${d.company||''}</div>
-          <div class="biz-cat">${d.category||''}</div>
+          <div class="biz-name">${d.name||d.company||''}</div>
+          <div class="biz-cat">${d.industry||''} ${d.size ? '· ' + d.size : ''}</div>
         </div>
       </div>
       <div class="biz-card-body">
-        <div class="biz-title">${d.title||''} ${d.isNew?'<span class="biz-new">NEW</span>':''}</div>
-        <div class="biz-desc">${d.description||''}</div>
-        <div class="biz-tags">${tags}</div>
+        <div class="biz-desc">${d.intro||d.description||''}</div>
+        <div class="biz-tags" style="margin-top:8px">${regions}</div>
         <div class="biz-meta">
-          <div class="biz-deadline">마감 <span>${d.deadline||'-'}</span></div>
-          <button class="biz-apply" onclick="window.open('협찬 제안서.html','_blank')">협찬 신청</button>
+          <div class="biz-deadline">${d.date||''}</div>
+          <button class="biz-apply" onclick="window.open('협찬 제안서.html','_blank')">협찬 제안하기</button>
         </div>
       </div>
     </div>`;
 }
 
+const TYPE_EMOJI = {'학생회':'🏛️','동아리':'🎯','스포츠':'⚽','예술 / 공연':'🎵','예술 / 사진':'📸','예술 / 연극':'🎭','창업 / IT':'💻','기타':'🎓'};
+
 function renderStuCard(d) {
-  const tags = (d.tags||[]).map((t,i) => `<span class="stu-tag ${(d.tagColors||[])[i]||''}">${t}</span>`).join('');
+  const emoji = d.emoji || TYPE_EMOJI[d.type] || '🎓';
+  const colorClasses = ['','alt1','alt2','alt3','alt4','alt5'];
+  const cc = d.colorClass !== undefined ? d.colorClass : '';
   return `
     <div class="stu-card">
-      <div class="stu-card-header ${d.colorClass||''}">
+      <div class="stu-card-header ${cc}">
         <div>
-          <div class="stu-group">${d.emoji||''} ${d.group||''}</div>
-          <div class="stu-univ">${d.univ||''}</div>
+          <div class="stu-group">${emoji} ${d.name||d.group||''}</div>
+          <div class="stu-univ">${d.univ||''} ${d.type ? '· ' + d.type : ''}</div>
         </div>
         <div class="stu-members">회원 ${d.members||'?'}명</div>
       </div>
       <div class="stu-card-body">
-        <div class="stu-title">${d.title||''}</div>
-        <div class="stu-desc">${d.description||''}</div>
-        <div class="stu-tags">${tags}</div>
-        <div class="stu-meta">
-          <div class="stu-info">행사일 <strong>${d.eventDate||'-'}</strong></div>
+        <div class="stu-desc">${d.intro||d.description||''}</div>
+        <div class="stu-meta" style="margin-top:12px">
+          <div class="stu-info">지역 <strong>${d.region||'-'}</strong></div>
           <button class="stu-contact" onclick="window.open('협찬 제안서.html','_blank')">협찬 제안하기</button>
         </div>
       </div>
@@ -622,11 +626,8 @@ function renderGrid(gridId, items, renderFn) {
   const visible = items.filter(x => x.status === '공개' || !x.status);
   grid.innerHTML = visible.length
     ? visible.map(renderFn).join('')
-    : `<div class="empty-placeholder">등록된 공고가 없습니다.</div>`;
+    : `<div class="empty-placeholder">아직 등록된 항목이 없습니다.</div>`;
 }
-
-function loadMoreBiz() { window.open('협찬 제안서.html','_blank'); }
-function loadMoreStu() { window.open('협찬 제안서.html','_blank'); }
 
 /* ── 초기 로드 ── */
 showSkeletons('bizGrid', 6);
@@ -653,38 +654,34 @@ showSkeletons('stuGrid', 6);
     const app  = initializeApp(firebaseConfig);
     const fsdb = getFirestore(app);
 
-    // 기업 협찬 공고 실시간 구독
+    // 가입 기업 현황 실시간 구독
     const bizQ = query(
-      collection(fsdb, 'biz_listings'),
+      collection(fsdb, 'corps'),
       where('status', '==', '공개'),
       orderBy('createdAt', 'desc')
     );
     onSnapshot(bizQ, snap => {
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderGrid('bizGrid', items.length ? items : window.SAMPLE_BIZ, renderBizCard);
-    }, () => renderGrid('bizGrid', window.SAMPLE_BIZ, renderBizCard));
+      renderGrid('bizGrid', items.length ? items : SAMPLE_BIZ, renderBizCard);
+    }, () => renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard));
 
-    // 학생단체 협찬 요청 실시간 구독
+    // 학생단체 목록 실시간 구독
     const stuQ = query(
-      collection(fsdb, 'stu_listings'),
+      collection(fsdb, 'clubs'),
       where('status', '==', '공개'),
       orderBy('createdAt', 'desc')
     );
     onSnapshot(stuQ, snap => {
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderGrid('stuGrid', items.length ? items : window.SAMPLE_STU, renderStuCard);
-    }, () => renderGrid('stuGrid', window.SAMPLE_STU, renderStuCard));
+      renderGrid('stuGrid', items.length ? items : SAMPLE_STU, renderStuCard);
+    }, () => renderGrid('stuGrid', SAMPLE_STU, renderStuCard));
 
     console.log('✅ Firebase 메인페이지 연동 완료');
   } catch(e) {
     console.warn('Firebase 연결 실패, 샘플 데이터로 표시합니다.', e);
-    renderGrid('bizGrid', window.SAMPLE_BIZ, renderBizCard);
-    renderGrid('stuGrid', window.SAMPLE_STU, renderStuCard);
+    renderGrid('bizGrid', SAMPLE_BIZ, renderBizCard);
+    renderGrid('stuGrid', SAMPLE_STU, renderStuCard);
   }
-
-  // 전역 노출 (폴백용)
-  window.SAMPLE_BIZ = window.SAMPLE_BIZ;
-  window.SAMPLE_STU = window.SAMPLE_STU;
 </script>
 
 <!-- 🔥 Firebase Auth — 로그인 상태 체크 -->
