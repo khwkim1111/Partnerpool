@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>양방향 마케팅 협찬 제안서</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F0F6FF;
+    --surface: #ffffff;
+    --surface2: #E6F1FB;
+    --border: #B5D4F4;
+    --corp: #0C447C;
+    --corp-glow: rgba(12,68,124,0.10);
+    --club: #1976D2;
+    --club-glow: rgba(25,118,210,0.10);
+    --text: #1a1a2e;
+    --muted: #6688aa;
+    --accent: #378ADD;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 0%, rgba(55,138,221,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 100%, rgba(12,68,124,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 60px 24px 100px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header { text-align: center; margin-bottom: 60px; animation: fadeUp 0.7s ease both; }
+  .header-eyebrow { font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 6vw, 48px);
+    line-height: 1.15;
+    background: linear-gradient(135deg, #0C447C 20%, #378ADD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 14px;
+  }
+  .header p { font-size: 14px; color: var(--muted); font-weight: 300; line-height: 1.7; }
+
+  .steps { display: flex; align-items: center; justify-content: center; gap: 0; margin-bottom: 48px; animation: fadeUp 0.7s 0.1s ease both; }
+  .step-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--muted); transition: all 0.4s; position: relative; z-index: 1; }
+  .step-dot.active { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px rgba(55,138,221,0.15); }
+  .step-dot.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step-line { width: 60px; height: 2px; background: var(--border); transition: background 0.4s; }
+  .step-line.done { background: var(--accent); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s ease both;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(12,68,124,0.07);
+  }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), transparent); opacity: 0.8; }
+  .card.corp-card::before { background: linear-gradient(90deg, #0C447C, #378ADD); opacity: 1; }
+  .card.club-card::before { background: linear-gradient(90deg, #1976D2, #85B7EB); opacity: 1; }
+
+  .card-title { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; display: flex; align-items: center; gap: 8px; }
+  .card-title span.dot { width: 6px; height: 6px; border-radius: 50%; background: #378ADD; display: inline-block; }
+
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .role-btn { border: 2px solid var(--border); border-radius: 16px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); background: var(--surface2); position: relative; overflow: hidden; }
+  .role-btn::after { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; }
+  .role-btn.corp-btn::after { background: var(--corp-glow); }
+  .role-btn.club-btn::after { background: var(--club-glow); }
+  .role-btn:hover { transform: translateY(-3px); }
+  .role-btn:hover::after { opacity: 1; }
+  .role-btn.selected.corp-btn { border-color: var(--corp); box-shadow: 0 0 0 4px var(--corp-glow), 0 12px 40px rgba(12,68,124,0.15); }
+  .role-btn.selected.club-btn { border-color: var(--club); box-shadow: 0 0 0 4px var(--club-glow), 0 12px 40px rgba(25,118,210,0.15); }
+  .role-btn.selected::after { opacity: 1; }
+  .role-label { font-size: 15px; font-weight: 700; display: block; margin-bottom: 6px; }
+  .role-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .field { margin-bottom: 28px; }
+  label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+  label .req { color: #f87171; margin-left: 3px; }
+  label .hint { color: var(--muted); font-weight: 300; font-size: 12px; margin-left: 6px; }
+
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"], textarea, select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px;
+    font-size: 14px; font-family: 'Noto Sans KR', sans-serif; color: var(--text); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
+  textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+  select option { background: #E6F1FB; color: #1a1a2e; }
+
+  .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .check-item { display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; padding: 11px 14px; cursor: pointer; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; font-size: 13px; user-select: none; }
+  .check-item:hover { border-color: var(--accent); background: rgba(55,138,221,0.05); }
+  .check-box { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-size: 11px; font-weight: 700; color: transparent; }
+  .check-item.checked { border-color: var(--accent); background: rgba(55,138,221,0.08); box-shadow: 0 0 0 3px rgba(55,138,221,0.12); }
+  .check-item.checked .check-box { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .corp-checks .check-item.checked { border-color: var(--corp); background: var(--corp-glow); box-shadow: 0 0 0 3px rgba(12,68,124,0.12); }
+  .corp-checks .check-item.checked .check-box { background: var(--corp); border-color: var(--corp); color: #fff; }
+  .club-checks .check-item.checked { border-color: var(--club); background: var(--club-glow); box-shadow: 0 0 0 3px rgba(25,118,210,0.12); }
+  .club-checks .check-item.checked .check-box { background: var(--club); border-color: var(--club); color: #fff; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } .role-grid { grid-template-columns: 1fr; } }
+
+  .section-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; margin-bottom: 28px; }
+  .corp-badge { background: var(--corp-glow); color: var(--corp); border: 1px solid rgba(12,68,124,0.2); }
+  .club-badge { background: var(--club-glow); color: var(--club); border: 1px solid rgba(25,118,210,0.2); }
+
+  .nav-row { display: flex; gap: 12px; margin-top: 32px; }
+  .btn-back { flex: 1; padding: 14px; border-radius: 12px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-size: 14px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .btn-back:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
+  .btn-next { flex: 2; padding: 14px; border-radius: 12px; border: none; background: #0C447C; color: #fff; font-size: 14px; font-weight: 700; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px rgba(12,68,124,0.25); }
+  .btn-next:hover { background: #185FA5; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(12,68,124,0.3); }
+
+  .success-card { text-align: center; padding: 60px 40px 40px; }
+  .success-icon { font-size: 64px; margin-bottom: 24px; animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  .success-card h2 { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 12px; background: linear-gradient(135deg, #0C447C, #378ADD); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .success-card > p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+  .summary-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin: 28px 0; text-align: left; }
+  .summary-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-item:last-child { border-bottom: none; }
+  .summary-key { color: var(--muted); min-width: 120px; flex-shrink: 0; }
+  .summary-val { color: var(--text); word-break: break-all; }
+
+  /* 계약서 다운로드 버튼 */
+  .contract-download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #0C447C, #1976D2);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(12,68,124,0.3);
+    margin-bottom: 12px;
+  }
+  .contract-download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(12,68,124,0.35); }
+
+  .restart-btn { display: inline-block; margin-top: 4px; padding: 12px 32px; border-radius: 999px; border: 1.5px solid var(--border); background: transparent; color: var(--muted); font-size: 13px; font-family: 'Noto Sans KR', sans-serif; cursor: pointer; transition: all 0.2s; }
+  .restart-btn:hover { border-color: #0C447C; color: #0C447C; background: var(--surface2); }
+
+  .hidden { display: none !important; }
+  .section { animation: fadeUp 0.5s ease both; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .num-wrap { position: relative; }
+  .num-wrap input { padding-right: 50px; }
+  .num-unit { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+  input[type="number"]::-webkit-inner-spin-button { opacity: 0.3; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <p class="header-eyebrow">Partner Pool</p>
+    <h1>양방향 마케팅<br>협찬 제안서</h1>
+    <p>기업과 대학교 동아리를 연결하는<br>마케팅 협찬 플랫폼 Partner Pool</p>
+  </div>
+
+  <div class="steps" id="steps">
+    <div class="step-dot active" id="s1">1</div>
+    <div class="step-line" id="l1"></div>
+    <div class="step-dot" id="s2">2</div>
+    <div class="step-line" id="l2"></div>
+    <div class="step-dot" id="s3">3</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1" class="section">
+    <div class="card">
+      <div class="card-title"><span class="dot"></span> 역할 선택</div>
+      <p style="font-size:14px; color:var(--muted); margin-bottom:24px; line-height:1.7;">귀하는 기업의 대표입니까? 또는 대학교 동아리의 대표입니까?</p>
+      <div class="role-grid">
+        <div class="role-btn corp-btn" onclick="selectRole('corp')">
+          <span class="role-label">🏢 기업</span>
+          <span class="role-sub">대학 동아리에게<br>협찬을 제안합니다</span>
+        </div>
+        <div class="role-btn club-btn" onclick="selectRole('club')">
+          <span class="role-label">🎓 대학교 동아리</span>
+          <span class="role-sub">기업에게<br>협찬을 요청합니다</span>
+        </div>
+      </div>
+      <div class="nav-row">
+        <button class="btn-next" onclick="goStep2()" style="flex:1">다음 단계 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2A: 기업 -->
+  <div id="step2corp" class="section hidden">
+    <div class="card corp-card">
+      <div class="section-badge corp-badge">🏢 기업 전용 설문</div>
+
+      <div class="field">
+        <label>기업명 / 브랜드명<span class="req">*</span></label>
+        <input type="text" id="c_company" placeholder="예: 파트너풀">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>담당자 이름<span class="req">*</span></label>
+          <input type="text" id="c_name" placeholder="홍길동">
+        </div>
+        <div class="field">
+          <label>담당자 연락처<span class="req">*</span></label>
+          <input type="text" id="c_contact" placeholder="010-0000-0000">
+        </div>
+      </div>
+      <div class="field">
+        <label>담당자 이메일<span class="req">*</span></label>
+        <input type="email" id="c_email" placeholder="example@company.com">
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>협업 희망 행사<span class="req">*</span></label>
+        <input type="text" id="c_campus" placeholder="예: 학교축제, 간식사업 등">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>협업 시작 희망일<span class="req">*</span></label>
+          <input type="date" id="c_start">
+        </div>
+        <div class="field">
+          <label>협업 종료 희망일<span class="req">*</span></label>
+          <input type="date" id="c_end">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>홍보 필수 조건<span class="req">*</span> <span class="hint">(복수 선택 가능)</span></label>
+        <div class="check-grid corp-checks" id="c_requirements">
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>기업 로고 필수</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>제품 이미지 필수</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>브랜드 컬러 준수</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>지정 해시태그 사용</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>계정 태그 필수</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>사전 콘텐츠 검수</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>슬로건/문구 포함</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>QR코드/링크 삽입</span></div>
+        </div>
+        <div style="margin-top:10px;">
+          <input type="text" id="c_req_custom" placeholder="직접 입력 (예: 경쟁사 언급 금지, 특정 포즈 필수 등)">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>원하는 홍보 방식<span class="req">*</span> <span class="hint">(복수 선택 가능)</span></label>
+        <div class="check-grid corp-checks" id="c_methods">
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>인스타그램</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>에브리타임</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>오프라인 부스</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>YouTube</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>카카오톡 홍보</span></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>동아리에 제공할 혜택<span class="req">*</span> <span class="hint">(현금, 현물, 제품 협찬, 경험 등)</span></label>
+        <textarea id="c_benefit" placeholder="예: 활동비 00만원 지원 + 자사 제품 제공"></textarea>
+      </div>
+      <div class="field">
+        <label>제안 메시지 / 협찬 의도<span class="req">*</span> <span class="hint">(협업을 제안하는 이유 및 기대 효과)</span></label>
+        <textarea id="c_proposal_msg" placeholder="예: 야구 장비의 대표적인 기업인 저희 기업과 야구동아리의 열정에 협찬을 제안하고 싶습니다."></textarea>
+      </div>
+      <div class="field">
+        <label>기타 요청 사항<span class="hint">(선택)</span></label>
+        <textarea id="c_etc" placeholder="추가로 전달하고 싶은 내용을 자유롭게 적어주세요."></textarea>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goStep1()">← 이전</button>
+        <button class="btn-next" onclick="goStep3()">제출하기 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2B: 동아리 -->
+  <div id="step2club" class="section hidden">
+    <div class="card club-card">
+      <div class="section-badge club-badge">🎓 대학교 동아리 전용 설문</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>동아리명<span class="req">*</span></label>
+          <input type="text" id="u_club" placeholder="예: K.E.M.A.">
+        </div>
+        <div class="field">
+          <label>소속 대학교<span class="req">*</span></label>
+          <input type="text" id="u_univ" placeholder="예: 한양대학교">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>담당자 이름<span class="req">*</span></label>
+          <input type="text" id="u_name" placeholder="홍길동">
+        </div>
+        <div class="field">
+          <label>담당자 연락처<span class="req">*</span></label>
+          <input type="text" id="u_contact" placeholder="010-0000-0000">
+        </div>
+      </div>
+      <div class="field">
+        <label>담당자 이메일<span class="req">*</span></label>
+        <input type="email" id="u_email" placeholder="example@hanyang.ac.kr">
+      </div>
+      <div class="field">
+        <label>동아리 활동 인원<span class="req">*</span></label>
+        <div class="num-wrap">
+          <input type="number" id="u_members" placeholder="0" min="1">
+          <span class="num-unit">명</span>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field-row">
+        <div class="field">
+          <label>협업 가능 시작일<span class="req">*</span></label>
+          <input type="date" id="u_start">
+        </div>
+        <div class="field">
+          <label>협업 가능 종료일<span class="req">*</span></label>
+          <input type="date" id="u_end">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>협찬 요청 사항<span class="req">*</span></label>
+        <input type="text" id="u_condition" placeholder="예: 상품 00개 요청, 활동비 지원 등">
+      </div>
+      <div class="field">
+        <label>가능한 홍보 채널<span class="req">*</span> <span class="hint">(복수 선택 가능)</span></label>
+        <div class="check-grid club-checks" id="u_channels">
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>인스타그램</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>에브리타임</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>오프라인 부스</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>YouTube</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>카카오 오픈채팅</span></div>
+          <div class="check-item" onclick="toggleCheck(this)"><div class="check-box">✓</div><span>교내 게시판</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>동아리 소개 / 포트폴리오 링크<span class="hint">(선택)</span></label>
+        <input type="text" id="u_portfolio" placeholder="https://instagram.com/your_club">
+      </div>
+      <div class="field">
+        <label>기타 어필 사항<span class="hint">(선택)</span></label>
+        <textarea id="u_etc" placeholder="저희 동아리의 장점을 통해 홍보가 잘 이루어 질 수 있습니다."></textarea>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="goStep1()">← 이전</button>
+        <button class="btn-next" onclick="goStep3()">제출하기 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: 완료 -->
+  <div id="step3" class="section hidden">
+    <div class="card success-card">
+      <div class="success-icon">🎉</div>
+      <h2>제출이 완료되었습니다!</h2>
+      <p>협업 제안서가 성공적으로 접수되었습니다.<br>담당자가 검토 후 빠른 시일 내에 연락드리겠습니다.</p>
+      <div class="summary-box" id="summaryBox"></div>
+      <button class="contract-download-btn" onclick="downloadContract()">📄 계약서 다운로드</button>
+      <br>
+      <button class="restart-btn" onclick="restart()">처음으로 돌아가기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let role = null;
+let formData = {};
+
+function selectRole(r) {
+  role = r;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.' + r + '-btn').classList.add('selected');
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+}
+
+function updateSteps(step) {
+  for (let i = 1; i <= 3; i++) {
+    const dot = document.getElementById('s' + i);
+    dot.classList.remove('active', 'done');
+    if (i < step) dot.classList.add('done');
+    else if (i === step) dot.classList.add('active');
+  }
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('l' + i).classList.toggle('done', i < step);
+  }
+}
+
+function goStep1() {
+  document.getElementById('step1').classList.remove('hidden');
+  document.getElementById('step2corp').classList.add('hidden');
+  document.getElementById('step2club').classList.add('hidden');
+  document.getElementById('step3').classList.add('hidden');
+  updateSteps(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goStep2() {
+  if (!role) { alert('역할을 선택해주세요.'); return; }
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('step2corp').classList.add('hidden');
+  document.getElementById('step2club').classList.add('hidden');
+  document.getElementById('step2' + role).classList.remove('hidden');
+  updateSteps(2);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function getChecked(containerId) {
+  const items = document.querySelectorAll('#' + containerId + ' .check-item.checked span');
+  return Array.from(items).map(s => s.textContent.trim()).join(', ') || '선택 없음';
+}
+
+function goStep3() {
+  if (role === 'corp') {
+    const reqChecked = document.querySelectorAll('#c_requirements .check-item.checked').length;
+    if (!v('c_company') || !v('c_name') || !v('c_contact') || !v('c_email') || !v('c_campus') || !v('c_start') || !v('c_end') || !v('c_benefit') || !v('c_proposal_msg') || reqChecked === 0) {
+      alert('필수 항목(*)을 모두 입력해주세요.\n홍보 필수 조건을 1개 이상 선택해주세요.'); return;
+    }
+    formData = {
+      role: 'corp',
+      company: v('c_company'), name: v('c_name'), contact: v('c_contact'), email: v('c_email'),
+      event: v('c_campus'), start: v('c_start'), end: v('c_end'),
+      requirements: getChecked('c_requirements') + (v('c_req_custom') ? ', ' + v('c_req_custom') : ''),
+      methods: getChecked('c_methods'),
+      benefit: v('c_benefit'),
+      message: v('c_proposal_msg'),
+      etc: v('c_etc')
+    };
+    document.getElementById('summaryBox').innerHTML = buildSummary([
+      ['유형', '🏢 기업'],
+      ['기업명', formData.company],
+      ['담당자', formData.name + ' / ' + formData.contact],
+      ['이메일', formData.email],
+      ['희망 행사', formData.event],
+      ['협업 기간', formData.start + ' ~ ' + formData.end],
+      ['홍보 필수 조건', formData.requirements],
+      ['홍보 방식', formData.methods],
+      ['제공 혜택', formData.benefit],
+      ['제안 메시지', formData.message],
+    ]);
+  } else {
+    if (!v('u_club') || !v('u_univ') || !v('u_name') || !v('u_contact') || !v('u_email') || !v('u_members') || !v('u_start') || !v('u_end') || !v('u_condition')) {
+      alert('필수 항목(*)을 모두 입력해주세요.'); return;
+    }
+    formData = {
+      role: 'club',
+      club: v('u_club'), univ: v('u_univ'), name: v('u_name'), contact: v('u_contact'), email: v('u_email'),
+      members: v('u_members'), start: v('u_start'), end: v('u_end'),
+      condition: v('u_condition'), channels: getChecked('u_channels'),
+      portfolio: v('u_portfolio'), etc: v('u_etc')
+    };
+    document.getElementById('summaryBox').innerHTML = buildSummary([
+      ['유형', '🎓 대학교 동아리'],
+      ['동아리명', formData.club + ' / ' + formData.univ],
+      ['담당자', formData.name + ' / ' + formData.contact],
+      ['이메일', formData.email],
+      ['활동 인원', formData.members + '명'],
+      ['협업 기간', formData.start + ' ~ ' + formData.end],
+      ['협찬 요청', formData.condition],
+      ['홍보 채널', formData.channels],
+      ['포트폴리오', formData.portfolio || '-'],
+    ]);
+  }
+  document.getElementById('step2corp').classList.add('hidden');
+  document.getElementById('step2club').classList.add('hidden');
+  document.getElementById('step3').classList.remove('hidden');
+  updateSteps(3);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function buildSummary(pairs) {
+  return pairs.map(([k, val]) =>
+    `<div class="summary-item"><span class="summary-key">${k}</span><span class="summary-val">${val || '-'}</span></div>`
+  ).join('');
+}
+
+function restart() {
+  role = null; formData = {};
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"], textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[type="date"]').forEach(el => el.value = '');
+  document.querySelectorAll('.check-item').forEach(el => el.classList.remove('checked'));
+  goStep1();
+}
+
+/* ── 계약서 HTML 생성 후 다운로드 ── */
+function downloadContract() {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const docNum = 'PP-' + today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0') + '-' + String(Math.floor(Math.random()*9000)+1000);
+
+  let partyA, partyB, clauseEvent, clausePeriod, clausePromo, clauseBenefit, clauseRequest, filenameTag;
+
+  if (formData.role === 'corp') {
+    partyA = { label: '갑 (협찬 기업)', name: formData.company, contact: formData.contact, email: formData.email, rep: formData.name };
+    partyB = { label: '을 (대학교 동아리)', name: '(동아리명)', contact: '-', email: '-', rep: '-' };
+    clauseEvent     = formData.event;
+    clausePeriod    = formData.start + ' ~ ' + formData.end;
+    clausePromo     = `홍보 필수 조건: ${formData.requirements}<br>홍보 방식: ${formData.methods}`;
+    clauseBenefit   = formData.benefit;
+    clauseRequest   = formData.message;
+    filenameTag     = formData.company;
+  } else {
+    partyA = { label: '갑 (협찬 기업)', name: '(기업명)', contact: '-', email: '-', rep: '-' };
+    partyB = { label: '을 (대학교 동아리)', name: formData.club + ' (' + formData.univ + ')', contact: formData.contact, email: formData.email, rep: formData.name };
+    clauseEvent     = '미정 (협의 후 확정)';
+    clausePeriod    = formData.start + ' ~ ' + formData.end;
+    clausePromo     = `홍보 채널: ${formData.channels}`;
+    clauseBenefit   = formData.condition;
+    clauseRequest   = formData.etc || '없음';
+    filenameTag     = formData.club;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마케팅 협찬 계약서 — ${filenameTag}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#0C447C; --blue:#378ADD; --light:#E6F1FB; --border:#B5D4F4; --bg:#F0F6FF; --text:#1a1a2e; --muted:#6688aa; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;line-height:1.8;}
+  .screen-bar{display:flex;justify-content:center;gap:12px;padding:28px 24px 0;}
+  .btn-dl{background:var(--navy);color:#fff;border:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(12,68,124,0.2);transition:background 0.2s;}
+  .btn-dl:hover{background:#185FA5;}
+  .wrap{max-width:860px;margin:32px auto 60px;background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:0 8px 40px rgba(12,68,124,0.10);overflow:hidden;}
+  /* 헤더 */
+  .c-header{background:var(--navy);padding:44px 56px 40px;position:relative;overflow:hidden;}
+  .c-header::after{content:'';position:absolute;right:-40px;bottom:-60px;width:280px;height:280px;border-radius:50%;background:rgba(55,138,221,0.15);}
+  .logo{display:flex;align-items:center;gap:4px;margin-bottom:22px;position:relative;z-index:1;}
+  .lp1{font-size:18px;font-weight:900;color:#fff;letter-spacing:-0.5px;}
+  .ld{width:6px;height:6px;border-radius:50%;display:inline-block;margin:0 1px 2px;}
+  .ld1{background:#fff;} .ld2{background:#85B7EB;}
+  .lp2{font-size:18px;font-weight:900;color:#85B7EB;letter-spacing:-0.5px;}
+  .c-eyebrow{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:8px;position:relative;z-index:1;}
+  .c-title{font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:-0.5px;position:relative;z-index:1;}
+  .c-docnum{font-size:11px;color:rgba(255,255,255,0.45);margin-top:12px;position:relative;z-index:1;}
+  /* 당사자 */
+  .parties{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid var(--border);}
+  .party{padding:28px 36px;border-right:1px solid var(--border);}
+  .party:last-child{border-right:none;}
+  .p-role{display:inline-flex;align-items:center;gap:6px;background:var(--light);color:var(--navy);font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;margin-bottom:12px;letter-spacing:0.05em;}
+  .p-name{font-size:17px;font-weight:900;color:var(--navy);margin-bottom:6px;font-family:'Noto Serif KR',serif;}
+  .p-info{font-size:12px;color:var(--muted);line-height:2;}
+  /* 본문 */
+  .body{padding:44px 56px;}
+  .intro{background:var(--light);border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:16px 20px;font-size:13.5px;line-height:1.9;margin-bottom:36px;color:var(--text);}
+  .clause{margin-bottom:32px;padding-bottom:32px;border-bottom:1px solid var(--light);}
+  .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .c-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px;}
+  .c-num{font-size:10px;font-weight:700;color:var(--blue);background:var(--light);padding:3px 10px;border-radius:4px;white-space:nowrap;letter-spacing:0.08em;}
+  .c-ttl{font-size:15px;font-weight:700;color:var(--navy);font-family:'Noto Serif KR',serif;}
+  .c-body{font-size:13.5px;color:#333;line-height:2;padding-left:2px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;}
+  .info-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;}
+  .info-item.full{grid-column:1/-1;}
+  .i-label{font-size:10px;font-weight:700;color:var(--blue);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;}
+  .i-val{font-size:13px;font-weight:600;color:var(--navy);}
+  /* 서명 */
+  .sign{background:var(--bg);border-top:2px solid var(--border);padding:40px 56px;}
+  .sign-date{text-align:center;font-size:14px;color:var(--muted);margin-bottom:32px;font-family:'Noto Serif KR',serif;}
+  .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+  .sign-block{border:1.5px solid var(--border);border-radius:14px;padding:24px;background:#fff;}
+  .s-role{font-size:11px;font-weight:700;color:var(--blue);letter-spacing:0.1em;margin-bottom:8px;}
+  .s-name{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+  .s-sub{font-size:12px;color:var(--muted);margin-bottom:24px;}
+  .s-line-row{display:flex;align-items:flex-end;gap:10px;}
+  .s-lbl{font-size:12px;color:var(--muted);white-space:nowrap;padding-bottom:4px;}
+  .s-line{flex:1;border-bottom:1.5px solid var(--border);height:32px;}
+  .s-stamp{width:52px;height:52px;border-radius:50%;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--border);font-weight:700;letter-spacing:0.03em;margin-left:auto;margin-top:10px;}
+  .sign-footer{text-align:center;font-size:12px;color:var(--muted);padding-top:20px;border-top:1px solid var(--light);}
+  .sign-footer strong{color:var(--navy);}
+  @media print{
+    body{background:#fff;}
+    .screen-bar{display:none!important;}
+    .wrap{margin:0;border-radius:0;box-shadow:none;border:none;}
+  }
+</style>
+</head>
+<body>
+<div class="screen-bar">
+  <button class="btn-dl" onclick="window.print()">🖨 인쇄 / PDF 저장</button>
+</div>
+<div class="wrap">
+
+  <div class="c-header">
+    <div class="logo">
+      <span class="lp1">Partner</span>
+      <span class="ld ld1"></span><span class="ld ld2"></span>
+      <span class="lp2">Pool</span>
+    </div>
+    <div class="c-eyebrow">OFFICIAL SPONSORSHIP AGREEMENT</div>
+    <div class="c-title">마케팅 협찬 계약서</div>
+    <div class="c-docnum">문서번호: ${docNum} &nbsp;|&nbsp; 작성일: ${dateStr}</div>
+  </div>
+
+  <div class="parties">
+    <div class="party">
+      <div class="p-role">갑 (甲) · 협찬 기업</div>
+      <div class="p-name">${partyA.name}</div>
+      <div class="p-info">
+        담당자: ${partyA.rep}<br>
+        연락처: ${partyA.contact}<br>
+        이메일: ${partyA.email}
+      </div>
+    </div>
+    <div class="party">
+      <div class="p-role">을 (乙) · 대학교 동아리</div>
+      <div class="p-name">${partyB.name}</div>
+      <div class="p-info">
+        담당자: ${partyB.rep}<br>
+        연락처: ${partyB.contact}<br>
+        이메일: ${partyB.email}
+      </div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div class="intro">
+      본 계약서는 <strong>갑(甲)</strong>과 <strong>을(乙)</strong>이 상호 협의하여 마케팅 협찬 활동을 진행함에 있어, 양 당사자의 권리와 의무를 명확히 하고 원활한 협업을 도모하기 위해 Partner Pool 플랫폼을 통해 체결된 협약입니다.
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 1 조</span><span class="c-ttl">계약의 목적</span></div>
+      <div class="c-body">
+        본 계약은 갑(甲)의 브랜드 홍보 및 마케팅 활동을 위해 을(乙)이 지정된 행사 및 채널을 통해 협찬 홍보 활동을 수행하고, 갑(甲)은 이에 상응하는 협찬을 제공함을 목적으로 한다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 2 조</span><span class="c-ttl">협업 행사 및 기간</span></div>
+      <div class="c-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="i-label">협업 행사</div>
+            <div class="i-val">${clauseEvent}</div>
+          </div>
+          <div class="info-item">
+            <div class="i-label">협업 기간</div>
+            <div class="i-val">${clausePeriod}</div>
+          </div>
+        </div>
+        ① 을(乙)은 위 기간 내에 합의된 홍보 활동을 성실히 이행하여야 한다.<br>
+        ② 불가피한 사정으로 일정 변경이 필요한 경우, 양 당사자는 서면(이메일 포함)으로 사전 협의하여야 한다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 3 조</span><span class="c-ttl">홍보 활동 및 필수 조건</span></div>
+      <div class="c-body">
+        <div class="info-grid">
+          <div class="info-item full">
+            <div class="i-label">홍보 조건 / 채널</div>
+            <div class="i-val">${clausePromo}</div>
+          </div>
+        </div>
+        ① 을(乙)은 위에 명시된 홍보 필수 조건을 준수하여 콘텐츠를 제작·배포하여야 한다.<br>
+        ② 갑(甲)의 브랜드 가이드라인 및 이미지 사용 규정을 위반한 콘텐츠는 게시 전 수정 또는 삭제 요청을 받을 수 있다.<br>
+        ③ 사전 콘텐츠 검수가 조건에 포함된 경우, 을(乙)은 게시 48시간 전 갑(甲)에게 시안을 제출하여야 한다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 4 조</span><span class="c-ttl">협찬 내용 및 제공 혜택</span></div>
+      <div class="c-body">
+        <div class="info-grid">
+          <div class="info-item full">
+            <div class="i-label">협찬 / 혜택 내용</div>
+            <div class="i-val">${clauseBenefit}</div>
+          </div>
+        </div>
+        ① 갑(甲)은 위 협찬 내용을 협업 시작일 이전 또는 양 당사자가 협의한 일정에 따라 을(乙)에게 제공하여야 한다.<br>
+        ② 협찬 내용의 변경이 필요한 경우, 사전에 양 당사자 간 서면 합의가 있어야 한다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 5 조</span><span class="c-ttl">기타 요청 및 협업 의도</span></div>
+      <div class="c-body">
+        <div class="info-grid">
+          <div class="info-item full">
+            <div class="i-label">협업 의도 / 기타 사항</div>
+            <div class="i-val">${clauseRequest}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 6 조</span><span class="c-ttl">지식재산권</span></div>
+      <div class="c-body">
+        ① 본 협업을 통해 제작된 홍보 콘텐츠의 저작권은 제작 주체인 을(乙)에게 귀속되나, 갑(甲)은 마케팅 목적으로 해당 콘텐츠를 비독점적으로 활용할 수 있는 라이선스를 가진다.<br>
+        ② 을(乙)은 갑(甲)의 로고, 상표 및 이미지를 본 계약 목적 외에 사용할 수 없다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 7 조</span><span class="c-ttl">비밀유지 의무</span></div>
+      <div class="c-body">
+        양 당사자는 본 계약과 관련하여 취득한 상대방의 영업 정보 및 개인정보를 제3자에게 누설하거나 본 계약 목적 외로 사용하여서는 아니 되며, 이 의무는 계약 종료 후 1년간 유효하다.
+      </div>
+    </div>
+
+    <div class="clause">
+      <div class="c-head"><span class="c-num">제 8 조</span><span class="c-ttl">계약 해지 및 분쟁 해결</span></div>
+      <div class="c-body">
+        ① 일방이 본 계약의 주요 조항을 위반하고 서면 통보 후 7일 이내에 시정하지 않을 경우, 상대방은 계약을 해지할 수 있다.<br>
+        ② 계약 해지 시 이미 제공된 협찬물은 반환하지 않으며, 미완료 활동에 대해서는 양 당사자 협의로 정산한다.<br>
+        ③ 본 계약과 관련된 분쟁은 우선 협의로 해결하며, 합의 불성립 시 관할 법원의 판결에 따른다.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="sign">
+    <div class="sign-date">위 내용에 동의하며, ${dateStr} 아래와 같이 서명합니다.</div>
+    <div class="sign-grid">
+      <div class="sign-block">
+        <div class="s-role">갑 (甲) · 협찬 기업</div>
+        <div class="s-name">${partyA.name}</div>
+        <div class="s-sub">담당자: ${partyA.rep} &nbsp;|&nbsp; ${partyA.contact}</div>
+        <div class="s-line-row">
+          <span class="s-lbl">서명</span>
+          <div class="s-line"></div>
+        </div>
+        <div class="s-stamp">인</div>
+      </div>
+      <div class="sign-block">
+        <div class="s-role">을 (乙) · 대학교 동아리</div>
+        <div class="s-name">${partyB.name}</div>
+        <div class="s-sub">담당자: ${partyB.rep} &nbsp;|&nbsp; ${partyB.contact}</div>
+        <div class="s-line-row">
+          <span class="s-lbl">서명</span>
+          <div class="s-line"></div>
+        </div>
+        <div class="s-stamp">인</div>
+      </div>
+    </div>
+    <div class="sign-footer">본 계약서는 <strong>Partner Pool</strong> 플랫폼을 통해 체결되었습니다. &nbsp;|&nbsp; ${docNum}</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `계약서_${filenameTag}_${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
