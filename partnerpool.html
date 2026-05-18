@@ -262,7 +262,7 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
     <a href="#features">주요 기능</a>
   </div>
   <div class="nav-right">
-    <button class="btn-ghost" onclick="window.open('login-kakao.html','_blank')">로그인</button>
+    <button class="btn-ghost" onclick="location.href='login-kakao.html'">로그인</button>
     <button class="btn-solid" onclick="go('club')">무료 가입</button>
   </div>
 </nav>
@@ -704,24 +704,62 @@ showSkeletons('stuGrid', 6);
     if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
     _auth = firebase.auth();
     // 로그인 상태에 따라 네비 버튼 업데이트
-    _auth.onAuthStateChanged(user => {
-      const loginBtn = document.querySelector('.btn-ghost');
-      if (loginBtn) {
-        if (user) {
-          const name = user.displayName || user.email.split('@')[0];
-          loginBtn.textContent = name + ' ▾';
-          loginBtn.onclick = () => {
-            if (confirm('로그아웃 하시겠습니까?')) _auth.signOut();
-          };
-        } else {
-          loginBtn.textContent = '로그인';
-          loginBtn.onclick = () => window.open('login-kakao.html', '_blank');
-        }
-      }
-    });
+    _auth.onAuthStateChanged(user => updateNavAuth(user));
     console.log('✅ Firebase Auth 메인 연결');
   } catch(e) {
     console.warn('Firebase Auth 연결 실패, 폴백 모드', e);
+    updateNavAuth(null);
+  }
+
+  function getKakaoUser() {
+    if (sessionStorage.getItem('pp_kakao_login') !== 'true') return null;
+    const name = sessionStorage.getItem('pp_kakao_name') || '';
+    const email = sessionStorage.getItem('pp_kakao_email') || '';
+    return {
+      displayName: name || (email ? email.split('@')[0] : '카카오 회원'),
+      provider: 'kakao'
+    };
+  }
+
+  function updateNavAuth(firebaseUser) {
+    const loginBtn = document.querySelector('.btn-ghost');
+    const joinBtn = document.querySelector('.btn-solid');
+    if (!loginBtn) return;
+
+    const kakaoUser = getKakaoUser();
+    const user = firebaseUser
+      ? {
+          displayName: firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '회원'),
+          provider: 'firebase'
+        }
+      : kakaoUser;
+
+    if (user) {
+      loginBtn.textContent = user.displayName + ' ▾';
+      loginBtn.onclick = () => {
+        if (!confirm('로그아웃 하시겠습니까?')) return;
+        sessionStorage.removeItem('pp_kakao_login');
+        sessionStorage.removeItem('pp_kakao_id');
+        sessionStorage.removeItem('pp_kakao_email');
+        sessionStorage.removeItem('pp_kakao_name');
+        if (_auth && _auth.currentUser) {
+          _auth.signOut().finally(() => location.reload());
+        } else {
+          location.reload();
+        }
+      };
+      if (joinBtn) {
+        joinBtn.textContent = '등록하기';
+        joinBtn.onclick = () => go('club');
+      }
+    } else {
+      loginBtn.textContent = '로그인';
+      loginBtn.onclick = () => location.href = 'login-kakao.html';
+      if (joinBtn) {
+        joinBtn.textContent = '무료 가입';
+        joinBtn.onclick = () => go('club');
+      }
+    }
   }
 
   /* ── 핵심 함수: 등록 버튼 클릭 시 로그인 체크 ── */
@@ -733,21 +771,23 @@ showSkeletons('stuGrid', 6);
       const user = _auth.currentUser;
       if (user) {
         // ✅ 로그인 돼있음 → 바로 등록 페이지로
-        window.open(destPage, '_blank');
+        location.href = destPage;
       } else {
         // ❌ 로그인 안 됨 → 로그인 페이지로 (목적지 파라미터 포함)
-        window.open('login-kakao.html?dest=' + dest, '_blank');
+        location.href = 'login-kakao.html?dest=' + dest;
       }
     } else {
       // Firebase 미연동: sessionStorage 폴백
-      const session = sessionStorage.getItem('pp_user');
+      const session = sessionStorage.getItem('pp_user') || sessionStorage.getItem('pp_kakao_login');
       if (session) {
-        window.open(destPage, '_blank');
+        location.href = destPage;
       } else {
-        window.open('login-kakao.html?dest=' + dest, '_blank');
+        location.href = 'login-kakao.html?dest=' + dest;
       }
     }
   }
+
+  updateNavAuth(_auth ? _auth.currentUser : null);
 </script>
 
 </body>
