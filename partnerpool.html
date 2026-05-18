@@ -765,25 +765,16 @@ showSkeletons('stuGrid', 6);
   /* ── 핵심 함수: 등록 버튼 클릭 시 로그인 체크 ── */
   function go(dest) {
     const destPage = dest === 'club' ? '학생단체 등록.html' : '기업 등록.html';
+    const firebaseUser = _auth ? _auth.currentUser : null;
+    const kakaoUser = getKakaoUser();
+    const fallbackUser = sessionStorage.getItem('pp_user');
 
-    if (_auth) {
-      // Firebase 연동 상태: 로그인 여부 확인
-      const user = _auth.currentUser;
-      if (user) {
-        // ✅ 로그인 돼있음 → 바로 등록 페이지로
-        location.href = destPage;
-      } else {
-        // ❌ 로그인 안 됨 → 로그인 페이지로 (목적지 파라미터 포함)
-        location.href = 'login-kakao.html?dest=' + dest;
-      }
+    if (firebaseUser || kakaoUser || fallbackUser) {
+      // 로그인 돼있음 → 바로 등록 페이지로
+      location.href = destPage;
     } else {
-      // Firebase 미연동: sessionStorage 폴백
-      const session = sessionStorage.getItem('pp_user') || sessionStorage.getItem('pp_kakao_login');
-      if (session) {
-        location.href = destPage;
-      } else {
-        location.href = 'login-kakao.html?dest=' + dest;
-      }
+      // 로그인 안 됨 → 로그인 페이지로 (목적지 파라미터 포함)
+      location.href = 'login-kakao.html?dest=' + dest;
     }
   }
 
