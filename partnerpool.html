@@ -278,26 +278,7 @@ footer{background:#07213A;padding:32px 56px;display:flex;justify-content:space-b
       <button class="btn-hero-o" onclick="go('corp')">🏢 기업으로 시작하기</button>
     </div>
   </div>
-  <div class="hero-visual">
-    <div class="hero-card">
-      <div class="hero-card-top">
-        <div class="hc-icon">🎓</div>
-        <div>
-          <div class="hc-title">한양대 경영학과 동아리</div>
-          <div class="hc-sub">회원 120명 · 연 4회 행사</div>
-        </div>
-      </div>
-      <div class="hc-tags">
-        <span class="tag navy">F&amp;B 협찬 희망</span>
-        <span class="tag blue">음료·간식</span>
-        <span class="tag green">굿즈 제작</span>
-      </div>
-      <div class="match-badge">
-        <span class="match-dot"></span>
-        3개 기업이 협찬 신청 중
-      </div>
-    </div>
-  </div>
+  <div class="hero-visual" id="heroVisual" style="display:none"></div>
 </section>
 
 <!-- STATS BAR -->
@@ -670,33 +651,83 @@ showSkeletons('stuGrid', 6);
     updateNavAuth(null);
   }
 
-  async function lookupRegisteredName(email) {
-    if (!_fsdb || !email) return;
-    if (sessionStorage.getItem('pp_registered_name')) return;
+  function showHeroCard(data, type) {
+    const visual = document.getElementById('heroVisual');
+    if (!visual) return;
+    const icon = type === 'club' ? '🎓' : '🏢';
+    const sub  = type === 'club'
+      ? `회원 ${data.members || '-'}명 · ${data.region || data.univ || '-'}`
+      : `${data.industry || '-'} · ${data.size || '-'}`;
+    const tagList = type === 'club'
+      ? [
+          data.type     ? { text: data.type,     cls: 'navy'  } : null,
+          data.sns && data.sns.includes('instagram') ? { text: 'Instagram', cls: 'blue'  } : null,
+          data.sns && data.sns.includes('youtube')   ? { text: 'YouTube',   cls: 'green' } : null,
+        ].filter(Boolean)
+      : [
+          data.industry ? { text: data.industry,                    cls: 'navy'  } : null,
+          data.regions  ? { text: data.regions.split(',')[0].trim(), cls: 'blue'  } : null,
+          data.channels ? { text: data.channels.split(',')[0].trim(),cls: 'green' } : null,
+        ].filter(Boolean);
+    const statusNote = data.status === '검토 대기'
+      ? `<div class="match-badge" style="color:#e67e22"><span class="match-dot" style="background:#e67e22"></span>관리자 승인 대기 중</div>`
+      : `<div class="match-badge"><span class="match-dot"></span>내 ${type === 'club' ? '학생단체' : '기업'} 정보</div>`;
+    visual.innerHTML = `
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <div class="hc-icon">${icon}</div>
+          <div>
+            <div class="hc-title">${data.name}</div>
+            <div class="hc-sub">${sub}</div>
+          </div>
+        </div>
+        <div class="hc-tags">
+          ${tagList.slice(0,3).map(t=>`<span class="tag ${t.cls}">${t.text}</span>`).join('')}
+        </div>
+        ${statusNote}
+      </div>`;
+    visual.style.display = '';
+  }
+
+  async function loadAndShowHeroCard(email, kakaoId) {
+    if (!_fsdb || (!email && !kakaoId)) return;
     try {
       const timeout = new Promise(resolve => setTimeout(() => resolve(null), 5000));
-      let snap = await Promise.race([
-        _fsdb.collection('clubs').where('email', '==', email).limit(1).get(),
-        timeout
-      ]);
-      if (snap && !snap.empty) {
-        sessionStorage.setItem('pp_registered_name', snap.docs[0].data().name);
-        sessionStorage.setItem('pp_registered_type', 'club');
-        updateNavDisplay();
-        return;
-      }
-      snap = await Promise.race([
-        _fsdb.collection('corps').where('email', '==', email).limit(1).get(),
-        timeout
-      ]);
-      if (snap && !snap.empty) {
-        sessionStorage.setItem('pp_registered_name', snap.docs[0].data().name);
-        sessionStorage.setItem('pp_registered_type', 'corp');
-        updateNavDisplay();
+      for (const [col, type] of [['clubs','club'],['corps','corp']]) {
+        let snap = null;
+        if (email) {
+          snap = await Promise.race([
+            _fsdb.collection(col).where('email','==',email).limit(1).get(),
+            timeout
+          ]);
+        }
+        if ((!snap || snap.empty) && kakaoId) {
+          snap = await Promise.race([
+            _fsdb.collection(col).where('kakaoId','==',kakaoId).limit(1).get(),
+            timeout
+          ]);
+        }
+        if (snap && !snap.empty) {
+          const data = snap.docs[0].data();
+          sessionStorage.setItem('pp_registered_name', data.name);
+          sessionStorage.setItem('pp_registered_type', type);
+          updateNavDisplay();
+          showHeroCard(data, type);
+          return;
+        }
       }
     } catch(e) {
-      console.warn('등록명 조회 실패:', e);
+      console.warn('등록 정보 조회 실패:', e);
     }
+  }
+
+  async function lookupRegisteredName(email, kakaoId) {
+    if (sessionStorage.getItem('pp_registered_name')) {
+      // 이름은 있지만 hero 카드 데이터는 다시 로드
+      loadAndShowHeroCard(email, kakaoId);
+      return;
+    }
+    loadAndShowHeroCard(email, kakaoId);
   }
 
   function updateNavDisplay() {
@@ -733,13 +764,12 @@ showSkeletons('stuGrid', 6);
       const registeredName = sessionStorage.getItem('pp_registered_name');
       loginBtn.textContent = (registeredName || user.displayName) + ' ▾';
 
-      // 등록명 없으면 Firestore에서 이메일로 조회
-      if (!registeredName) {
-        const email = firebaseUser
-          ? (firebaseUser.email || '')
-          : (sessionStorage.getItem('pp_kakao_email') || '');
-        lookupRegisteredName(email);
-      }
+      // 등록 정보 조회 (이름 표시 + 히어로 카드 표시)
+      const email = firebaseUser
+        ? (firebaseUser.email || '')
+        : (sessionStorage.getItem('pp_kakao_email') || '');
+      const kakaoId = sessionStorage.getItem('pp_kakao_id') || '';
+      lookupRegisteredName(email, kakaoId);
       loginBtn.onclick = () => {
         if (!confirm('로그아웃 하시겠습니까?')) return;
         sessionStorage.removeItem('pp_kakao_login');
